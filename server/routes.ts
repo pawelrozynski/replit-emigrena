@@ -31,8 +31,17 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      // Convert date string to Date object
+      // Convert date string to Date object and strip time part
       const entryDate = new Date(req.body.date);
+      entryDate.setHours(0, 0, 0, 0);
+
+      // Check if the date is in the future
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (entryDate > today) {
+        return res.status(400).json({ error: "Nie można dodawać wpisów z przyszłą datą" });
+      }
 
       // Check if entry already exists for this date
       const existingEntry = await db.query.wellbeingEntries.findFirst({

@@ -49,6 +49,19 @@ export function WellbeingForm() {
   });
 
   const onSubmit = (data: Omit<NewWellbeingEntry, 'userId' | 'date'>) => {
+    // Validate future date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+
+    if (date > today) {
+      form.setError('root', {
+        type: 'manual',
+        message: 'Nie można dodawać wpisów z przyszłą datą'
+      });
+      return;
+    }
+
     createEntry({
       ...data,
       date,
@@ -86,9 +99,19 @@ export function WellbeingForm() {
                   selected={date}
                   onSelect={(date) => date && setDate(date)}
                   locale={pl}
+                  disabled={(date) => {
+                    const now = new Date();
+                    now.setHours(0, 0, 0, 0);
+                    return date > now;
+                  }}
                 />
               </PopoverContent>
             </Popover>
+            {form.formState.errors.root && (
+              <p className="mt-2 text-sm text-destructive">
+                {form.formState.errors.root.message}
+              </p>
+            )}
           </CardContent>
         </Card>
 

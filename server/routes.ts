@@ -20,6 +20,7 @@ export function registerRoutes(app: Express): Server {
       });
       res.json(entries);
     } catch (error) {
+      console.error("Error fetching entries:", error);
       res.status(500).json({ error: "Błąd podczas pobierania wpisów" });
     }
   });
@@ -30,10 +31,14 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
+      // Convert date string to Date object
+      const entryDate = new Date(req.body.date);
+
+      // Check if entry already exists for this date
       const existingEntry = await db.query.wellbeingEntries.findFirst({
         where: and(
           eq(wellbeingEntries.userId, req.user.id),
-          eq(wellbeingEntries.date, req.body.date)
+          eq(wellbeingEntries.date, entryDate)
         ),
       });
 
@@ -41,17 +46,26 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Wpis na ten dzień już istnieje" });
       }
 
+      // Prepare the entry data
+      const entryData = {
+        ...req.body,
+        userId: req.user.id,
+        date: entryDate,
+        // Set interval fields to null if not provided
+        totalSleepDuration: req.body.totalSleepDuration || null,
+        deepSleepDuration: req.body.deepSleepDuration || null,
+      };
+
+      // Insert the entry
       const [entry] = await db
         .insert(wellbeingEntries)
-        .values({
-          ...req.body,
-          userId: req.user.id,
-        })
+        .values(entryData)
         .returning();
 
       res.json(entry);
     } catch (error) {
-      res.status(500).json({ error: "Błąd podczas tworzenia wpisu" });
+      console.error("Error creating entry:", error);
+      res.status(500).json({ error: "Błąd podczas tworzenia wpisu: " + (error as Error).message });
     }
   });
 

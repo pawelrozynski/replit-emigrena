@@ -30,7 +30,12 @@ const crypto = {
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    // Extend Express.User to include our User type properties
+    interface User {
+      id: number;
+      email: string;
+      password: string;
+    }
   }
 }
 
@@ -56,26 +61,32 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        const [user] = await db
-          .select()
-          .from(users)
-          .where(eq(users.username, username))
-          .limit(1);
+    new LocalStrategy(
+      {
+        usernameField: 'email',
+        passwordField: 'password'
+      },
+      async (email, password, done) => {
+        try {
+          const [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, email))
+            .limit(1);
 
-        if (!user) {
-          return done(null, false, { message: "Incorrect username." });
+          if (!user) {
+            return done(null, false, { message: "Nie znaleziono użytkownika." });
+          }
+          const isMatch = await crypto.compare(password, user.password);
+          if (!isMatch) {
+            return done(null, false, { message: "Nieprawidłowe hasło." });
+          }
+          return done(null, user);
+        } catch (err) {
+          return done(err);
         }
-        const isMatch = await crypto.compare(password, user.password);
-        if (!isMatch) {
-          return done(null, false, { message: "Incorrect password." });
-        }
-        return done(null, user);
-      } catch (err) {
-        return done(err);
       }
-    })
+    )
   );
 
   passport.serializeUser((user, done) => {
@@ -97,25 +108,25 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { username, password } = req.body;
-      if (!username || !password) {
-        return res.status(400).send("Username and password are required");
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).send("Email i hasło są wymagane");
       }
 
       const [existingUser] = await db
         .select()
         .from(users)
-        .where(eq(users.username, username))
+        .where(eq(users.email, email))
         .limit(1);
 
       if (existingUser) {
-        return res.status(400).send("Username already exists");
+        return res.status(400).send("Użytkownik o podanym adresie email już istnieje");
       }
 
       const hashedPassword = await crypto.hash(password);
       const [newUser] = await db
         .insert(users)
-        .values({ username, password: hashedPassword })
+        .values({ email, password: hashedPassword })
         .returning();
 
       req.login(newUser, (err) => {
@@ -131,7 +142,7 @@ export function setupAuth(app: Express) {
     passport.authenticate("local", (err: any, user: Express.User, info: IVerifyOptions) => {
       if (err) return next(err);
       if (!user) return res.status(400).send(info.message);
-      
+
       req.login(user, (err) => {
         if (err) return next(err);
         return res.json(user);
@@ -141,14 +152,14 @@ export function setupAuth(app: Express) {
 
   app.post("/api/logout", (req, res) => {
     req.logout((err) => {
-      if (err) return res.status(500).send("Logout failed");
-      res.json({ message: "Logged out successfully" });
+      if (err) return res.status(500).send("Wylogowanie nie powiodło się");
+      res.json({ message: "Wylogowano pomyślnie" });
     });
   });
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated");
+      return res.status(401).send("Nie zalogowano");
     }
     res.json(req.user);
   });

@@ -2,62 +2,56 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { wellbeingEntries, insertWellbeingSchema } from "@db/schema";
-import { and, eq } from "drizzle-orm";
+import { wellbeingEntries } from "@db/schema";
+import { and, eq, desc } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
   app.get("/api/entries", async (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated");
+      return res.status(401).send("Nie zalogowano");
     }
 
     try {
       const entries = await db.query.wellbeingEntries.findMany({
         where: eq(wellbeingEntries.userId, req.user.id),
-        orderBy: [wellbeingEntries.date, "desc"],
+        orderBy: desc(wellbeingEntries.date),
       });
       res.json(entries);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch entries" });
+      res.status(500).json({ error: "Błąd podczas pobierania wpisów" });
     }
   });
 
   app.post("/api/entries", async (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated");
+      return res.status(401).send("Nie zalogowano");
     }
 
     try {
-      const result = insertWellbeingSchema.safeParse({
-        ...req.body,
-        userId: req.user.id,
-      });
-
-      if (!result.success) {
-        return res.status(400).json({ errors: result.error.issues });
-      }
-
       const existingEntry = await db.query.wellbeingEntries.findFirst({
         where: and(
           eq(wellbeingEntries.userId, req.user.id),
-          eq(wellbeingEntries.date, result.data.date)
+          eq(wellbeingEntries.date, req.body.date)
         ),
       });
 
       if (existingEntry) {
-        return res.status(400).json({ error: "Entry already exists for this date" });
+        return res.status(400).json({ error: "Wpis na ten dzień już istnieje" });
       }
 
       const [entry] = await db
         .insert(wellbeingEntries)
-        .values(result.data)
+        .values({
+          ...req.body,
+          userId: req.user.id,
+        })
         .returning();
 
       res.json(entry);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create entry" });
+      res.status(500).json({ error: "Błąd podczas tworzenia wpisu" });
     }
   });
 

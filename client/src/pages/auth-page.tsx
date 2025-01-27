@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@/hooks/use-user";
 
 const authSchema = z.object({
-  username: z.string().min(3, "Nazwa użytkownika musi mieć min. 3 znaki"),
+  email: z.string().email("Nieprawidłowy adres email"),
   password: z.string().min(6, "Hasło musi mieć min. 6 znaków"),
 });
 
@@ -18,11 +18,11 @@ type AuthFields = z.infer<typeof authSchema>;
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const { login, register } = useUser();
-  
+
   const form = useForm<AuthFields>({
     resolver: zodResolver(authSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -51,12 +51,12 @@ export default function AuthPage() {
             <CardContent className="space-y-4">
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nazwa użytkownika</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...field} autoComplete="username" />
+                      <Input {...field} type="email" autoComplete="email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

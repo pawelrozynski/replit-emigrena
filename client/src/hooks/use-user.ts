@@ -3,7 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { User } from '@db/schema';
 
 interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -24,18 +24,18 @@ export function useUser() {
         body: JSON.stringify(credentials),
         credentials: 'include',
       });
-      
+
       if (!res.ok) {
         throw new Error(await res.text());
       }
-      
+
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
         title: "Zalogowano pomyślnie",
-        variant: "success",
+        variant: "default"
       });
     },
     onError: (error: Error) => {
@@ -66,7 +66,7 @@ export function useUser() {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
         title: "Zarejestrowano pomyślnie",
-        variant: "success",
+        variant: "default"
       });
     },
     onError: (error: Error) => {
@@ -93,7 +93,7 @@ export function useUser() {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
         title: "Wylogowano pomyślnie",
-        variant: "success",
+        variant: "default"
       });
     },
   });

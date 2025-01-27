@@ -15,7 +15,7 @@ export default function Dashboard() {
             <h1 className="text-xl font-semibold">eMigrena</h1>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
-                Zalogowano jako {user?.username}
+                Zalogowano jako {user?.email}
               </span>
               <Button
                 variant="outline"

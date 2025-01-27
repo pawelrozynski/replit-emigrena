@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").unique().notNull(),
+  email: text("email").unique().notNull(),
   password: text("password").notNull(),
 });
 
@@ -46,7 +46,11 @@ export const wellbeingEntries = pgTable("wellbeing_entries", {
   sweetDrinksPortions: integer("sweet_drinks_portions"),
 });
 
-export const insertUserSchema = createInsertSchema(users);
+export const insertUserSchema = createInsertSchema(users, {
+  email: z.string().email("Nieprawidłowy adres email"),
+  password: z.string().min(6, "Hasło musi mieć co najmniej 6 znaków"),
+});
+
 export const selectUserSchema = createSelectSchema(users);
 
 export const insertWellbeingSchema = createInsertSchema(wellbeingEntries, {

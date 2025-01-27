@@ -12,7 +12,7 @@ export default function Dashboard() {
       <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-semibold">eMigrena</h1>
+            <h1 className="text-2xl font-semibold text-primary">eMigrena</h1>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
                 Zalogowano jako {user?.email}
@@ -34,12 +34,12 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-8">
             <div>
-              <h2 className="text-lg font-semibold mb-4">Nowy wpis</h2>
+              <h2 className="text-2xl font-semibold mb-6">Nowy wpis</h2>
               <WellbeingForm />
             </div>
           </div>
           <div>
-            <h2 className="text-lg font-semibold mb-4">Historia</h2>
+            <h2 className="text-2xl font-semibold mb-6">Historia wpisów</h2>
             <EntriesList />
           </div>
         </div>

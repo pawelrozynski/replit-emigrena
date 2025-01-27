@@ -1,0 +1,37 @@
+Pola podstawowe:
+- Data wpisu (unikalna dla danego użytkownika, dzień którego dotyczą dane w formularzu)
+- Data utworzenia wpisu
+- Data aktualizacji wpisu (w przyszłości będzie można modyfikować wpisy)
+
+Parametry snu:
+- Subiektywna ocena jakości snu - liczba od 1 do 100 (pole do wpisania wartości) lub brak odpowiedzi
+- Całkowity czas snu - długość czasu w formacie HH:MM - wartość od 00:00 do 16:59 lub brak odpowiedzi
+- Długość snu głębokiego - długość czasu w formacie HH:MM - wartość od 00:00 do 16:59 lub brak odpowiedzi
+- Spanie przy otwartym oknie - wartość logiczna - tak/nie/brak odpowiedzi
+- Występowanie przyjemnych snów - wartość logiczna - tak/nie/brak odpowiedzi
+- Występowanie koszmarów - wartość logiczna - tak/nie/brak odpowiedzi
+- Wybudzenie do toalety - wartość logiczna - tak/nie/brak odpowiedzi
+- Godzina położenia się spać - godzina w formacie HH:MM lub brak odpowiedzi
+- Godzina przebudzenia - godzina w formacie HH:MM lub brak odpowiedzi
+- Sztywność karku po przebudzeniu - wartość logiczna - tak/nie/brak odpowiedzi
+- Czas od przebudzenia do wstania z łóżka (minuty) - długość czasu w formacie HH:MM - wartość od 00:00 do 01:59 lub brak odpowiedzi
+
+Aktywność zawodowa:
+- Miejsce pracy - pole wyboru (praca stacjonarna, praca zdalna w domu, praca w terenie, brak odpowiedzi)
+- Motywacja do pracy - skala od 1 do 10 lub brak odpowiedzi
+
+Parametry samopoczucia:
+- Ogólny nastrój - skala od 1 do 10 lub brak odpowiedzi
+- Zadowolenie z kontaktów społecznych - skala od 1 do 10 lub brak odpowiedzi
+- Chęć do aktywności fizycznej - skala od 1 do 10 lub brak odpowiedzi
+- Intensywność bólu głowy - skala od 1 do 10 lub brak odpowiedzi lub brak bólu
+- Poziom senności w ciągu dnia - skala od 1 do 10 lub brak odpowiedzi
+- Zmęczenie fizyczne - skala od 1 do 10 lub brak odpowiedzi
+
+Parametry aktywności i diety:
+- Liczba kroków - liczba od 0 do 100 000 lub brak odpowiedzi
+- Liczba pełnych posiłków - liczba od 0 do 5 lub brak odpowiedzi
+- Porcje owoców i warzyw - liczba od 0 do 5 lub brak odpowiedzi
+- Spożycie alkoholu w ml - liczba od 0 do 500 lub brak odpowiedzi
+- Porcje słodyczy - liczba od 0 do 5 lub brak odpowiedzi
+- Porcje słodkich napojów - liczba od 0 do 10 lub brak odpowiedzi

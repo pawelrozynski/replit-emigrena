@@ -1,0 +1,163 @@
+# Dokumentacja projektu eMigrena - Wersja 2.0
+
+## 1. Wprowadzenie
+
+eMigrena to aplikacja webowa służąca do monitorowania dobrostanu i analizy czynników wpływających na samopoczucie użytkownika, ze szczególnym uwzględnieniem osób cierpiących na migrenę. Projekt powstał z myślą o stworzeniu narzędzia umożliwiającego systematyczne śledzenie stanu zdrowia i identyfikację potencjalnych czynników wyzwalających ataki migreny.
+
+## 2. Architektura systemu
+
+### 2.1. Technologie
+- Frontend: React + TypeScript
+- Routing: React Router v6
+- Stylowanie: Tailwind CSS
+- Backend: Supabase (PostgreSQL + Auth)
+- Hosting: Vite + Netlify
+
+### 2.2. Struktura bazy danych
+
+#### 2.2.1. Tabela wellbeing_entries
+
+Główna tabela przechowująca wpisy dotyczące samopoczucia użytkownika.
+
+**Pola podstawowe:**
+- id (uuid, PK) - Unikalny identyfikator wpisu
+- user_id (uuid, FK) - Powiązanie z użytkownikiem
+- date (date) - Data wpisu
+- created_at (timestamptz) - Data utworzenia wpisu
+
+**Parametry snu:**
+- sleep_quality (int, 1-100) - Subiektywna ocena jakości snu
+- total_sleep_duration (interval) - Całkowity czas snu
+- deep_sleep_duration (interval) - Czas snu głębokiego
+- slept_with_window_open (boolean) - Spanie przy otwartym oknie
+- had_good_dreams (boolean) - Występowanie przyjemnych snów
+- had_bad_dreams (boolean) - Występowanie koszmarów
+- woke_up_to_toilet (boolean) - Wybudzenie do toalety
+- sleep_time (time) - Godzina położenia się spać
+- wake_time (time) - Godzina wstania
+- neck_stiffness (boolean) - Sztywność karku po przebudzeniu
+- time_to_get_up (int, 0-120) - Czas potrzebny na wstanie z łóżka (minuty)
+- worked_from_home (boolean) - Praca zdalna w danym dniu
+
+**Parametry samopoczucia:**
+- work_motivation (int, 0-10) - Motywacja do pracy
+- mood (int, 0-10) - Ogólny nastrój
+- social_satisfaction (int, 0-10) - Zadowolenie z kontaktów społecznych
+- physical_activity_desire (int, 0-10) - Chęć do aktywności fizycznej
+- headache (int, 0-10) - Intensywność bólu głowy
+- sleepiness (int, 0-10) - Poziom senności
+- physical_fatigue (int, 0-10) - Zmęczenie fizyczne
+
+**Parametry aktywności i diety:**
+- steps_count (int, 0-100000) - Liczba kroków
+- full_meals_count (int, 0-5) - Liczba pełnych posiłków
+- fruits_veggies_portions (int, 0-5) - Porcje owoców i warzyw
+- alcohol_ml (int, 0-200) - Spożycie alkoholu w ml
+- sweets_portions (int, 0-5) - Porcje słodyczy
+- sweet_drinks_portions (int, 0-10) - Porcje słodkich napojów
+
+#### 2.2.2. Tabela cms_contents
+
+Tabela zarządzająca treściami statycznymi w aplikacji.
+
+**Pola:**
+- id (uuid, PK) - Unikalny identyfikator treści
+- key (text) - Klucz identyfikujący treść
+- content (text) - Zawartość
+- created_at (timestamptz) - Data utworzenia
+- updated_at (timestamptz) - Data ostatniej aktualizacji
+
+#### 2.2.3. Tabela documentation_versions
+
+Tabela przechowująca historię dokumentacji.
+
+**Pola:**
+- id (uuid, PK) - Unikalny identyfikator wersji
+- content (text) - Treść dokumentacji
+- version_date (timestamptz) - Data wersji
+- created_at (timestamptz) - Data utworzenia wpisu
+
+### 2.3. Bezpieczeństwo
+
+#### 2.3.1. Polityki RLS
+- Użytkownicy mają dostęp tylko do własnych wpisów
+- Treści CMS są dostępne do odczytu dla wszystkich
+- Edycja treści CMS tylko dla administratora
+- Dokumentacja dostępna do odczytu dla wszystkich
+- Zarządzanie dokumentacją tylko dla administratora
+
+#### 2.3.2. Uwierzytelnianie
+- System haseł dla dostępu do aplikacji
+- Separacja dostępu użytkownik/administrator
+- Sesje przechowywane w sessionStorage
+
+## 3. Funkcjonalności
+
+### 3.1. Panel użytkownika (/app)
+
+#### 3.1.1. Formularz wprowadzania danych
+Podzielony na sekcje odpowiadające grupom parametrów:
+- Parametry snu
+- Parametry samopoczucia
+- Aktywność i dieta
+
+#### 3.1.2. Historia wpisów
+- Paginacja po 10 wpisów
+- Sortowanie chronologiczne (od najnowszych)
+- Cachowanie pobranych danych
+- W historii widoczne tylko daty, po ich kliknięciu otwiera się popup z parametrami wpisanymi przez użytkownika w danym dniu
+
+### 3.2. Panel administracyjny (/admin)
+- Zarządzanie treściami statycznymi
+- System dokumentacji z wersjonowaniem
+- Podgląd i edycja zawartości CMS
+
+## 4. Planowany rozwój
+
+### 4.1. Funkcjonalności w przygotowaniu
+- Analityka i wizualizacja danych
+  - Wykresy trendów
+  - Korelacje między parametrami
+  - Identyfikacja wzorców
+- System powiadomień
+  - Przypomnienia o uzupełnieniu danych
+  - Alerty o wykrytych wzorcach
+- Eksport danych
+  - Format CSV
+  - Format JSON
+  - Raporty PDF
+- Raporty okresowe
+  - Podsumowania tygodniowe
+  - Podsumowania miesięczne
+  - Analiza trendów
+
+### 4.2. Długoterminowe cele
+- Integracja z urządzeniami monitorującymi sen
+  - Smartwatche
+  - Opaski fitness
+  - Dedykowane urządzenia do monitoringu snu
+- Moduł społecznościowy
+  - Anonimowe porównania z grupą
+  - Wymiana doświadczeń
+  - System wsparcia
+- API dla zewnętrznych integracji
+  - Dokumentacja API
+  - System autoryzacji
+  - Rate limiting
+
+## 5. Wdrożenie
+
+### 5.1. Środowisko produkcyjne
+- Hosting: Netlify
+- Baza danych: Supabase
+- Domena: emigrena.pawelrozynski.com
+
+### 5.2. Proces deploymentu
+- Automatyczny deployment przez Netlify
+- Migracje bazy danych przez Supabase
+- Continuous Integration/Deployment
+
+## 6. Kontakt i wsparcie
+
+Wszelkie pytania i sugestie dotyczące rozwoju projektu można kierować na adres: pawel@rozynscy.com
+

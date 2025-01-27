@@ -6,6 +6,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").unique().notNull(),
   password: text("password").notNull(),
+  isAdmin: boolean("is_admin").default(false).notNull(),
 });
 
 export const wellbeingEntries = pgTable("wellbeing_entries", {
@@ -46,32 +47,42 @@ export const wellbeingEntries = pgTable("wellbeing_entries", {
   sweetDrinksPortions: integer("sweet_drinks_portions"),
 });
 
-export const insertUserSchema = createInsertSchema(users, {
-  email: z.string().email("Nieprawidłowy adres email"),
-  password: z.string().min(6, "Hasło musi mieć co najmniej 6 znaków"),
+export const cmsContents = pgTable("cms_contents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  key: text("key").unique().notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const documentationVersions = pgTable("documentation_versions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  content: text("content").notNull(),
+  versionDate: timestamp("version_date", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Schemas
+export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 
-export const insertWellbeingSchema = createInsertSchema(wellbeingEntries, {
-  sleepQuality: z.number().min(1).max(100).optional(),
-  workMotivation: z.number().min(0).max(10).optional(),
-  mood: z.number().min(0).max(10).optional(),
-  socialSatisfaction: z.number().min(0).max(10).optional(),
-  physicalActivityDesire: z.number().min(0).max(10).optional(),
-  headache: z.number().min(0).max(10).optional(),
-  sleepiness: z.number().min(0).max(10).optional(),
-  physicalFatigue: z.number().min(0).max(10).optional(),
-  stepsCount: z.number().min(0).max(100000).optional(),
-  fullMealsCount: z.number().min(0).max(5).optional(),
-  fruitsVeggiesPortions: z.number().min(0).max(5).optional(),
-  alcoholMl: z.number().min(0).max(500).optional(),
-  sweetsPortions: z.number().min(0).max(5).optional(),
-  sweetDrinksPortions: z.number().min(0).max(10).optional(),
-});
-
+export const insertWellbeingSchema = createInsertSchema(wellbeingEntries);
 export const selectWellbeingSchema = createSelectSchema(wellbeingEntries);
 
+export const insertCmsSchema = createInsertSchema(cmsContents, {
+  key: z.string().min(1, "Klucz jest wymagany"),
+  content: z.string().min(1, "Treść jest wymagana"),
+});
+export const selectCmsSchema = createSelectSchema(cmsContents);
+
+export const insertDocumentationSchema = createInsertSchema(documentationVersions, {
+  content: z.string().min(1, "Treść dokumentacji jest wymagana"),
+  versionDate: z.date(),
+});
+export const selectDocumentationSchema = createSelectSchema(documentationVersions);
+
+// Types
 export type User = typeof users.$inferSelect;
 export type WellbeingEntry = typeof wellbeingEntries.$inferSelect;
-export type NewWellbeingEntry = typeof wellbeingEntries.$inferInsert;
+export type CmsContent = typeof cmsContents.$inferSelect;
+export type DocumentationVersion = typeof documentationVersions.$inferSelect;

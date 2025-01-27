@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { wellbeingEntries } from "@db/schema";
+import { wellbeingEntries, cmsContents, documentationVersions } from "@db/schema";
 import { and, eq, desc } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
@@ -75,6 +75,100 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error creating entry:", error);
       res.status(500).json({ error: "Błąd podczas tworzenia wpisu: " + (error as Error).message });
+    }
+  });
+
+  // CMS routes
+  app.get("/api/cms", async (req, res) => {
+    try {
+      const contents = await db.query.cmsContents.findMany({
+        orderBy: desc(cmsContents.updatedAt),
+      });
+      res.json(contents);
+    } catch (error) {
+      console.error("Error fetching CMS contents:", error);
+      res.status(500).json({ error: "Błąd podczas pobierania treści CMS" });
+    }
+  });
+
+  app.post("/api/cms", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user.isAdmin) {
+      return res.status(403).send("Brak uprawnień");
+    }
+
+    try {
+      const [content] = await db
+        .insert(cmsContents)
+        .values({
+          key: req.body.key,
+          content: req.body.content,
+        })
+        .returning();
+
+      res.json(content);
+    } catch (error) {
+      console.error("Error creating CMS content:", error);
+      res.status(500).json({ error: "Błąd podczas tworzenia treści CMS" });
+    }
+  });
+
+  app.put("/api/cms/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user.isAdmin) {
+      return res.status(403).send("Brak uprawnień");
+    }
+
+    try {
+      const [content] = await db
+        .update(cmsContents)
+        .set({
+          content: req.body.content,
+          updatedAt: new Date(),
+        })
+        .where(eq(cmsContents.id, req.params.id))
+        .returning();
+
+      if (!content) {
+        return res.status(404).json({ error: "Nie znaleziono treści" });
+      }
+
+      res.json(content);
+    } catch (error) {
+      console.error("Error updating CMS content:", error);
+      res.status(500).json({ error: "Błąd podczas aktualizacji treści CMS" });
+    }
+  });
+
+  // Documentation routes
+  app.get("/api/documentation", async (req, res) => {
+    try {
+      const versions = await db.query.documentationVersions.findMany({
+        orderBy: desc(documentationVersions.versionDate),
+      });
+      res.json(versions);
+    } catch (error) {
+      console.error("Error fetching documentation versions:", error);
+      res.status(500).json({ error: "Błąd podczas pobierania wersji dokumentacji" });
+    }
+  });
+
+  app.post("/api/documentation", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user.isAdmin) {
+      return res.status(403).send("Brak uprawnień");
+    }
+
+    try {
+      const [version] = await db
+        .insert(documentationVersions)
+        .values({
+          content: req.body.content,
+          versionDate: new Date(req.body.versionDate),
+        })
+        .returning();
+
+      res.json(version);
+    } catch (error) {
+      console.error("Error creating documentation version:", error);
+      res.status(500).json({ error: "Błąd podczas tworzenia wersji dokumentacji" });
     }
   });
 

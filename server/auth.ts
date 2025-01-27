@@ -34,6 +34,7 @@ declare global {
       id: number;
       email: string;
       password: string;
+      isAdmin: boolean; // Added isAdmin property
     }
   }
 }

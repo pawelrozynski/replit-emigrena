@@ -8,7 +8,7 @@ import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 
-function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
+function Router() {
   const { user, isLoading } = useUser();
 
   if (isLoading) {
@@ -23,14 +23,9 @@ function PrivateRoute({ component: Component }: { component: React.ComponentType
     return <AuthPage />;
   }
 
-  return <Component />;
-}
-
-function Router() {
   return (
     <Switch>
-      <Route path="/" component={() => <PrivateRoute component={Dashboard} />} />
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
   );

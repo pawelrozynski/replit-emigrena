@@ -11,9 +11,25 @@ export function useUser() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: user, isLoading } = useQuery<User>({
+  const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ['/api/user'],
     retry: false,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const res = await fetch('/api/user', {
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          return null;
+        }
+        throw new Error(await res.text());
+      }
+
+      return res.json();
+    }
   });
 
   const loginMutation = useMutation({

@@ -30,7 +30,6 @@ const crypto = {
 
 declare global {
   namespace Express {
-    // Extend Express.User to include our User type properties
     interface User {
       id: number;
       email: string;

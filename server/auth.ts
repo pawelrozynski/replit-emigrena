@@ -14,39 +14,23 @@ const scryptAsync = promisify(scrypt);
 
 const crypto = {
   hash: async (password: string) => {
-    // Use PostgreSQL's crypt function directly in SQL when inserting
     const salt = randomBytes(16).toString("hex");
-    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+    const buf = (await scryptAsync(password, salt, 32)) as Buffer;
     return `${buf.toString("hex")}.${salt}`;
   },
   compare: async (suppliedPassword: string, storedPassword: string) => {
     try {
-      // Split stored password into hash and salt
       const [hashedPassword, salt] = storedPassword.split(".");
 
-      // Validate input format
-      if (!hashedPassword || !salt || typeof hashedPassword !== 'string' || typeof salt !== 'string') {
+      if (!hashedPassword || !salt) {
         console.error('Invalid stored password format');
         return false;
       }
 
-      // Convert stored hash to buffer
-      const hashedPasswordBuf = Buffer.from(hashedPassword, "hex");
+      const storedBuf = Buffer.from(hashedPassword, "hex");
+      const suppliedBuf = (await scryptAsync(suppliedPassword, salt, 32)) as Buffer;
 
-      // Hash supplied password with same salt
-      const suppliedPasswordBuf = await scryptAsync(suppliedPassword, salt, 64) as Buffer;
-
-      // Ensure both buffers have the same length before comparison
-      if (hashedPasswordBuf.length !== suppliedPasswordBuf.length) {
-        console.error('Hash length mismatch:', {
-          stored: hashedPasswordBuf.length,
-          supplied: suppliedPasswordBuf.length
-        });
-        return false;
-      }
-
-      // Compare hashes
-      return timingSafeEqual(hashedPasswordBuf, suppliedPasswordBuf);
+      return timingSafeEqual(storedBuf, suppliedBuf);
     } catch (error) {
       console.error('Error comparing passwords:', error);
       return false;
@@ -185,7 +169,6 @@ export function setupAuth(app: Express) {
         await emailService.sendVerificationEmail(email, verificationToken);
       } catch (error) {
         console.error('Failed to send verification email:', error);
-        // Don't expose email sending errors to the client
       }
 
       res.json({ 
@@ -220,5 +203,43 @@ export function setupAuth(app: Express) {
       return res.status(401).send("Nie zalogowano");
     }
     res.json(req.user);
+  });
+
+  app.get("/verify-email", async (req, res) => {
+    const { token } = req.query;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).send("Nieprawidłowy token weryfikacyjny");
+    }
+
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.verificationToken, token))
+        .limit(1);
+
+      if (!user) {
+        return res.status(400).send("Nieprawidłowy token weryfikacyjny");
+      }
+
+      if (user.verificationTokenExpiry && new Date(user.verificationTokenExpiry) < new Date()) {
+        return res.status(400).send("Token weryfikacyjny wygasł");
+      }
+
+      await db
+        .update(users)
+        .set({
+          isEmailVerified: true,
+          verificationToken: null,
+          verificationTokenExpiry: null
+        })
+        .where(eq(users.id, user.id));
+
+      res.redirect('/?verified=true');
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).send("Wystąpił błąd podczas weryfikacji adresu email");
+    }
   });
 }

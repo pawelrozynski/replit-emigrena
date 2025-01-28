@@ -13,6 +13,7 @@ import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import Home from "@/pages/home";
 
 function Router() {
   const { user, isLoading } = useUser();
@@ -34,7 +35,7 @@ function Router() {
       <Navbar />
       <main className="flex-grow">
         <Switch>
-          <Route path="/" component={Dashboard} />
+          <Route path="/" component={Home} />
           <Route path="/new-entry" component={NewEntry} />
           <Route path="/entries" component={Entries} />
           <Route path="/profile" component={Profile} />

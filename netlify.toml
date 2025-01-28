@@ -8,14 +8,14 @@ node_bundler = "esbuild"
 external_node_modules = ["@neondatabase/serverless"]
 
 [[redirects]]
-from = "/.netlify/functions/api/*"
-to = "/.netlify/functions/api"
+from = "/api/hello"
+to = "/.netlify/functions/hello"
 status = 200
 force = true
 
 [[redirects]]
 from = "/api/*"
-to = "/.netlify/functions/api"
+to = "/.netlify/functions/api/:splat"
 status = 200
 force = true
 

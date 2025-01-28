@@ -4,21 +4,23 @@ import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { formSections } from "@/lib/types";
-import type { NewWellbeingEntry } from "@db/schema";
+import { useCms } from "@/hooks/use-cms";
+import type { WellbeingEntry } from "@db/schema";
 import { useWellbeing } from "@/hooks/use-wellbeing";
 
 export function WellbeingForm() {
   const [date, setDate] = useState<Date>(new Date());
   const { createEntry } = useWellbeing();
+  const { getContent } = useCms();
 
-  const form = useForm<Omit<NewWellbeingEntry, 'userId' | 'date'>>({
+  const form = useForm<Omit<WellbeingEntry, 'userId' | 'id' | 'date' | 'createdAt'>>({
     defaultValues: {
       sleepQuality: null,
       totalSleepDuration: null,
@@ -48,7 +50,7 @@ export function WellbeingForm() {
     },
   });
 
-  const onSubmit = (data: Omit<NewWellbeingEntry, 'userId' | 'date'>) => {
+  const onSubmit = (data: Omit<WellbeingEntry, 'userId' | 'id' | 'date' | 'createdAt'>) => {
     // Ustaw datę na północ UTC wybranego dnia
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -70,7 +72,7 @@ export function WellbeingForm() {
     createEntry({
       ...data,
       date: submitDate,
-    } as NewWellbeingEntry);
+    } as WellbeingEntry);
   };
 
   return (
@@ -123,18 +125,19 @@ export function WellbeingForm() {
         {formSections.map((section) => (
           <Card key={section.title}>
             <CardHeader>
-              <CardTitle>{section.title}</CardTitle>
-              <CardDescription>{section.description}</CardDescription>
+              <CardTitle>{getContent(section.title)}</CardTitle>
+              <CardDescription>{getContent(section.description)}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
               {section.fields.map((field) => (
                 <FormField
                   key={field.name}
                   control={form.control}
-                  name={field.name as keyof Omit<NewWellbeingEntry, 'userId' | 'date'>}
+                  name={field.name as keyof Omit<WellbeingEntry, 'userId' | 'id' | 'date' | 'createdAt'>}
                   render={({ field: formField }) => (
                     <FormItem>
                       <FormLabel>{field.label}</FormLabel>
+                      <FormDescription>{getContent(field.description)}</FormDescription>
                       <FormControl>
                         {field.type === "boolean" ? (
                           <div className="flex items-center gap-2">

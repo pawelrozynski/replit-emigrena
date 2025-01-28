@@ -12,16 +12,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Download } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import type { DocumentationVersion } from "@db/schema";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import jsPDF from 'jspdf';
+
+// Funkcja pomocnicza do formatowania tekstu
+const formatDocumentationText = (text: string) => {
+  // Zamień nagłówki markdown na elementy HTML
+  return text
+    .split('\n')
+    .map(line => {
+      if (line.startsWith('# ')) {
+        return `<h1 class="text-2xl font-bold mt-8 mb-4">${line.substring(2)}</h1>`;
+      }
+      if (line.startsWith('## ')) {
+        return `<h2 class="text-xl font-semibold mt-6 mb-3">${line.substring(3)}</h2>`;
+      }
+      if (line.startsWith('### ')) {
+        return `<h3 class="text-lg font-semibold mt-4 mb-2">${line.substring(4)}</h3>`;
+      }
+      if (line.startsWith('#### ')) {
+        return `<h4 class="text-base font-semibold mt-3 mb-2">${line.substring(5)}</h4>`;
+      }
+      if (line.startsWith('- ')) {
+        return `<li class="ml-4 mb-1">${line.substring(2)}</li>`;
+      }
+      if (line.trim() === '') {
+        return '<div class="h-4"></div>';
+      }
+      return `<p class="mb-2">${line}</p>`;
+    })
+    .join('\n');
+};
 
 export function DocumentationEditor() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newContent, setNewContent] = useState("");
+  const [previewMode, setPreviewMode] = useState(false);
 
   const { data: versions = [], isLoading } = useQuery<DocumentationVersion[]>({
     queryKey: ['/api/documentation'],
@@ -52,6 +81,7 @@ export function DocumentationEditor() {
         variant: "default",
       });
       setNewContent("");
+      setPreviewMode(false);
     },
     onError: (error: Error) => {
       toast({
@@ -68,106 +98,6 @@ export function DocumentationEditor() {
     createMutation.mutate(newContent);
   };
 
-  const exportToPDF = async (version: DocumentationVersion) => {
-    try {
-      const pdf = new jsPDF();
-      const lineHeight = 7;
-      const fontSize = 12;
-      const marginLeft = 20;
-      const marginTop = 20;
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const maxLineWidth = pageWidth - 2 * marginLeft;
-
-      // Funkcja pomocnicza do dodawania tekstu z automatycznym podziałem na linie
-      const addWrappedText = (text: string, x: number, y: number, maxWidth: number) => {
-        const words = text.split(' ');
-        let line = '';
-        let currentY = y;
-
-        for (let i = 0; i < words.length; i++) {
-          const testLine = line + (line ? ' ' : '') + words[i];
-          const testWidth = pdf.getStringUnitWidth(testLine) * fontSize / pdf.internal.scaleFactor;
-
-          if (testWidth > maxWidth) {
-            pdf.text(line, x, currentY);
-            line = words[i];
-            currentY += lineHeight;
-
-            // Dodaj nową stronę, jeśli tekst przekracza wysokość strony
-            if (currentY >= pdf.internal.pageSize.getHeight() - marginTop) {
-              pdf.addPage();
-              currentY = marginTop + lineHeight;
-            }
-          } else {
-            line = testLine;
-          }
-        }
-
-        if (line) {
-          pdf.text(line, x, currentY);
-          currentY += lineHeight;
-        }
-
-        return currentY;
-      };
-
-      // Ustaw czcionkę i rozmiar
-      pdf.setFont("helvetica");
-      pdf.setFontSize(fontSize);
-
-      // Tytuł
-      pdf.setFontSize(24);
-      pdf.setFont("helvetica", "bold");
-      const title = "Dokumentacja eMigrena";
-      const titleWidth = pdf.getStringUnitWidth(title) * 24 / pdf.internal.scaleFactor;
-      const titleX = (pageWidth - titleWidth) / 2;
-      pdf.text(title, titleX, marginTop);
-
-      // Data wersji
-      pdf.setFontSize(14);
-      pdf.setFont("helvetica", "normal");
-      const dateText = `Wersja z dnia: ${format(new Date(version.versionDate), "PP", { locale: pl })}`;
-      const dateWidth = pdf.getStringUnitWidth(dateText) * 14 / pdf.internal.scaleFactor;
-      const dateX = (pageWidth - dateWidth) / 2;
-      pdf.text(dateText, dateX, marginTop + 10);
-
-      // Treść dokumentacji
-      pdf.setFontSize(fontSize);
-      let currentY = marginTop + 20;
-
-      // Podziel tekst na sekcje (według nagłówków)
-      const sections = version.content.split(/^#+ /m);
-
-      for (const section of sections) {
-        if (!section.trim()) continue;
-
-        // Sprawdź, czy potrzebna jest nowa strona
-        if (currentY >= pdf.internal.pageSize.getHeight() - marginTop) {
-          pdf.addPage();
-          currentY = marginTop;
-        }
-
-        // Dodaj sekcję z zawijaniem tekstu
-        currentY = addWrappedText(section.trim(), marginLeft, currentY, maxLineWidth);
-        currentY += lineHeight; // Dodatkowy odstęp między sekcjami
-      }
-
-      // Zapisz PDF
-      pdf.save(`dokumentacja-emigrena-${format(new Date(version.versionDate), "yyyy-MM-dd")}.pdf`);
-
-      toast({
-        title: "PDF wygenerowany pomyślnie",
-        variant: "default",
-      });
-    } catch (error) {
-      toast({
-        title: "Błąd generowania PDF",
-        description: "Nie udało się wygenerować pliku PDF",
-        variant: "destructive",
-      });
-    }
-  };
-
   if (isLoading) {
     return <Loader2 className="h-8 w-8 animate-spin" />;
   }
@@ -175,17 +105,33 @@ export function DocumentationEditor() {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Textarea
-          placeholder="Treść nowej wersji dokumentacji..."
-          value={newContent}
-          onChange={(e) => setNewContent(e.target.value)}
-          rows={8}
-          className="font-mono"
-        />
-        <Button type="submit" disabled={!newContent}>
-          <Plus className="h-4 w-4 mr-2" />
-          Dodaj nową wersję
-        </Button>
+        {!previewMode ? (
+          <Textarea
+            placeholder="Treść nowej wersji dokumentacji..."
+            value={newContent}
+            onChange={(e) => setNewContent(e.target.value)}
+            rows={12}
+            className="font-mono text-sm"
+          />
+        ) : (
+          <div className="border rounded-lg p-6 bg-white">
+            <div 
+              className="prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ 
+                __html: formatDocumentationText(newContent) 
+              }} 
+            />
+          </div>
+        )}
+        <div className="flex gap-4">
+          <Button type="button" variant="outline" onClick={() => setPreviewMode(!previewMode)}>
+            {previewMode ? "Edytuj" : "Podgląd"}
+          </Button>
+          <Button type="submit" disabled={!newContent}>
+            <Plus className="h-4 w-4 mr-2" />
+            Dodaj nową wersję
+          </Button>
+        </div>
       </form>
 
       <ScrollArea className="h-[600px] border rounded-lg">
@@ -193,32 +139,24 @@ export function DocumentationEditor() {
           <TableHeader>
             <TableRow>
               <TableHead>Data wersji</TableHead>
-              <TableHead className="w-[60%]">Treść</TableHead>
-              <TableHead>Akcje</TableHead>
+              <TableHead className="w-[70%]">Treść</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {versions.map((version) => (
               <TableRow key={version.id}>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   {format(new Date(version.versionDate), "PP", { locale: pl })}
                 </TableCell>
                 <TableCell>
-                  <ScrollArea className="h-[200px]">
-                    <div className="whitespace-pre-wrap p-4 font-mono">
-                      {version.content}
-                    </div>
+                  <ScrollArea className="h-[400px]">
+                    <div 
+                      className="prose prose-sm max-w-none p-4"
+                      dangerouslySetInnerHTML={{ 
+                        __html: formatDocumentationText(version.content) 
+                      }} 
+                    />
                   </ScrollArea>
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportToPDF(version)}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Eksportuj PDF
-                  </Button>
                 </TableCell>
               </TableRow>
             ))}

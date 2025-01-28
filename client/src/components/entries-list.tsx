@@ -10,10 +10,13 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWellbeing } from "@/hooks/use-wellbeing";
+import { useCms } from "@/hooks/use-cms";
 import { formSections } from "@/lib/types";
 import type { WellbeingEntry } from "@db/schema";
 
 function EntryDialog({ entry }: { entry: WellbeingEntry }) {
+  const { getContent } = useCms();
+
   const formatFieldValue = (value: any, type: string) => {
     if (value === null || value === undefined) return "-";
     if (type === "boolean") return value ? "Tak" : "Nie";
@@ -40,7 +43,7 @@ function EntryDialog({ entry }: { entry: WellbeingEntry }) {
         <ScrollArea className="h-[60vh]">
           {formSections.map((section) => (
             <div key={section.title} className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">{section.title}</h3>
+              <h3 className="text-lg font-semibold mb-2">{getContent(section.title)}</h3>
               <div className="grid grid-cols-2 gap-4">
                 {section.fields.map((field) => {
                   const value = entry[field.name as keyof WellbeingEntry];
@@ -48,7 +51,7 @@ function EntryDialog({ entry }: { entry: WellbeingEntry }) {
 
                   return (
                     <div key={field.name}>
-                      <p className="text-sm text-muted-foreground">{field.label}</p>
+                      <p className="text-sm text-muted-foreground">{getContent(field.label)}</p>
                       <p className="text-sm font-medium">
                         {formatFieldValue(value, field.type)}
                       </p>

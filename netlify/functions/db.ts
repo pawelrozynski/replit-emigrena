@@ -8,15 +8,22 @@ if (!process.env.DATABASE_URL) {
 
 // Konfiguracja połączenia z bazą danych
 neonConfig.fetchConnectionCache = true;
+
+// Dodaj szczegółowe logowanie dla debugowania
+console.log('Inicjalizacja połączenia z bazą danych...');
+console.log('URL bazy:', process.env.DATABASE_URL.replace(/:[^:@]*@/, ':****@'));
+
 const sql = neon(process.env.DATABASE_URL);
 export const db = drizzle(sql, { schema });
 
 // Prosty test połączenia przy inicjalizacji
 (async () => {
   try {
-    const test = await sql`SELECT 1`;
-    console.log('Database connection successful:', test);
+    const test = await sql`SELECT current_timestamp`;
+    console.log('Test połączenia z bazą danych:', test);
+    console.log('Połączenie z bazą danych zostało ustanowione pomyślnie');
   } catch (error) {
-    console.error('Database connection failed:', error);
+    console.error('Błąd połączenia z bazą danych:', error);
+    // Nie rzucamy błędu, aby funkcja mogła się zainicjalizować
   }
 })();

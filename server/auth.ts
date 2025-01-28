@@ -8,6 +8,7 @@ import { promisify } from "util";
 import { users, type User } from "@db/schema";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
+import { emailService } from "./services/email";
 
 const scryptAsync = promisify(scrypt);
 const crypto = {
@@ -34,7 +35,10 @@ declare global {
       id: number;
       email: string;
       password: string;
-      isAdmin: boolean; // Added isAdmin property
+      isAdmin: boolean;
+      isEmailVerified: boolean;
+      verificationToken: string | null;
+      verificationTokenExpiry: Date | null;
     }
   }
 }
@@ -81,6 +85,11 @@ export function setupAuth(app: Express) {
           if (!isMatch) {
             return done(null, false, { message: "Nieprawidłowe hasło." });
           }
+
+          if (!user.isEmailVerified) {
+            return done(null, false, { message: "Adres email nie został zweryfikowany. Sprawdź swoją skrzynkę pocztową." });
+          }
+
           return done(null, user);
         } catch (err) {
           return done(err);
@@ -124,17 +133,72 @@ export function setupAuth(app: Express) {
       }
 
       const hashedPassword = await crypto.hash(password);
+      const verificationToken = emailService.generateVerificationToken();
+      const verificationTokenExpiry = new Date();
+      verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24);
+
       const [newUser] = await db
         .insert(users)
-        .values({ email, password: hashedPassword })
+        .values({ 
+          email, 
+          password: hashedPassword,
+          verificationToken,
+          verificationTokenExpiry,
+          isEmailVerified: false,
+          isAdmin: false //Added this line
+        })
         .returning();
 
-      req.login(newUser, (err) => {
-        if (err) return next(err);
-        return res.json(newUser);
+      try {
+        await emailService.sendVerificationEmail(email, verificationToken);
+      } catch (error) {
+        console.error('Failed to send verification email:', error);
+        // Don't expose email sending errors to the client
+      }
+
+      res.json({ 
+        message: "Rejestracja pomyślna. Sprawdź swoją skrzynkę pocztową, aby zweryfikować adres email." 
       });
     } catch (error) {
       next(error);
+    }
+  });
+
+  app.get("/api/verify-email", async (req, res) => {
+    const { token } = req.query;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).send("Nieprawidłowy token weryfikacyjny");
+    }
+
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.verificationToken, token))
+        .limit(1);
+
+      if (!user) {
+        return res.status(400).send("Nieprawidłowy token weryfikacyjny");
+      }
+
+      if (user.verificationTokenExpiry && new Date(user.verificationTokenExpiry) < new Date()) {
+        return res.status(400).send("Token weryfikacyjny wygasł");
+      }
+
+      await db
+        .update(users)
+        .set({
+          isEmailVerified: true,
+          verificationToken: null,
+          verificationTokenExpiry: null
+        })
+        .where(eq(users.id, user.id));
+
+      res.redirect('/?verified=true');
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).send("Wystąpił błąd podczas weryfikacji adresu email");
     }
   });
 

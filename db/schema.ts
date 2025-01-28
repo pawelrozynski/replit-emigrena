@@ -7,6 +7,9 @@ export const users = pgTable("users", {
   email: text("email").unique().notNull(),
   password: text("password").notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
+  isEmailVerified: boolean("is_email_verified").default(false).notNull(),
+  verificationToken: text("verification_token"),
+  verificationTokenExpiry: timestamp("verification_token_expiry", { withTimezone: true }),
 });
 
 export const wellbeingEntries = pgTable("wellbeing_entries", {

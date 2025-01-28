@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@/hooks/use-user";
@@ -25,6 +27,15 @@ type AuthFields = z.infer<typeof authSchema>;
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const { login, register, isLoading } = useUser();
+  const [location] = useLocation();
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.split('?')[1]);
+    if (params.get('verified') === 'true') {
+      setVerificationSuccess(true);
+    }
+  }, [location]);
 
   const form = useForm<AuthFields>({
     resolver: zodResolver(authSchema),
@@ -46,6 +57,13 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md mx-4">
+        {verificationSuccess && (
+          <Alert className="mb-4">
+            <AlertDescription>
+              Email został pomyślnie zweryfikowany. Możesz się teraz zalogować.
+            </AlertDescription>
+          </Alert>
+        )}
         <CardHeader>
           <CardTitle>{isLogin ? "Logowanie" : "Rejestracja"}</CardTitle>
           <CardDescription>

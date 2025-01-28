@@ -5,8 +5,12 @@ functions = "netlify/functions"
 
 [functions]
 node_bundler = "esbuild"
-external_node_modules = ["@neondatabase/serverless"]
-included_files = ["db/schema.*"]
+external_node_modules = [
+  "@neondatabase/serverless",
+  "drizzle-orm",
+  "ws"
+]
+included_files = ["db/**/*.ts"]
 
 [[redirects]]
 from = "/api/*"

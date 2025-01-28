@@ -101,9 +101,10 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "Nieprawidłowe hasło." });
           }
 
-          if (!user.isEmailVerified) {
-            return done(null, false, { message: "Adres email nie został zweryfikowany. Sprawdź swoją skrzynkę pocztową." });
-          }
+          // Tymczasowo wyłączamy sprawdzanie weryfikacji email
+          // if (!user.isEmailVerified) {
+          //   return done(null, false, { message: "Adres email nie został zweryfikowany. Sprawdź swoją skrzynkę pocztową." });
+          // }
 
           return done(null, user);
         } catch (err) {
@@ -149,30 +150,27 @@ export function setupAuth(app: Express) {
       }
 
       const hashedPassword = await crypto.hash(password);
-      const verificationToken = emailService.generateVerificationToken();
-      const verificationTokenExpiry = new Date();
-      verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24);
 
+      // Tymczasowo ustawiamy konto jako zweryfikowane bez tokenu
       const [newUser] = await db
         .insert(users)
         .values({ 
           email, 
           password: hashedPassword,
-          verificationToken,
-          verificationTokenExpiry,
-          isEmailVerified: false,
+          isEmailVerified: true, // Auto-verify for now
           isAdmin: false 
         })
         .returning();
 
-      try {
-        await emailService.sendVerificationEmail(email, verificationToken);
-      } catch (error) {
-        console.error('Failed to send verification email:', error);
-      }
+      // Weryfikacja email zostanie dodana później
+      // try {
+      //   await emailService.sendVerificationEmail(email, verificationToken);
+      // } catch (error) {
+      //   console.error('Failed to send verification email:', error);
+      // }
 
       res.json({ 
-        message: "Rejestracja pomyślna. Sprawdź swoją skrzynkę pocztową, aby zweryfikować adres email." 
+        message: "Rejestracja pomyślna. Możesz się teraz zalogować." 
       });
     } catch (error) {
       next(error);
@@ -204,7 +202,6 @@ export function setupAuth(app: Express) {
     }
     res.json(req.user);
   });
-
   app.get("/verify-email", async (req, res) => {
     const { token } = req.query;
 

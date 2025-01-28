@@ -16,48 +16,44 @@ export function Navbar() {
                 eMigrena
               </a>
             </Link>
-            {user && (
-              <nav className="ml-10 flex items-center space-x-4">
-                <Link href="/new-entry">
+            <nav className="ml-10 flex items-center space-x-4">
+              <Link href="/new-entry">
+                <a className="text-sm text-muted-foreground hover:text-foreground">
+                  Nowy wpis
+                </a>
+              </Link>
+              <Link href="/entries">
+                <a className="text-sm text-muted-foreground hover:text-foreground">
+                  Historia wpisów
+                </a>
+              </Link>
+              {user?.email === 'prozynski@kanga.exchange' && (
+                <Link href="/admin">
                   <a className="text-sm text-muted-foreground hover:text-foreground">
-                    Nowy wpis
+                    Panel Admina
                   </a>
                 </Link>
-                <Link href="/entries">
-                  <a className="text-sm text-muted-foreground hover:text-foreground">
-                    Historia wpisów
-                  </a>
-                </Link>
-                {user?.email === 'prozynski@kanga.exchange' && (
-                  <Link href="/admin">
-                    <a className="text-sm text-muted-foreground hover:text-foreground">
-                      Panel Admina
-                    </a>
-                  </Link>
-                )}
-                <Link href="/profile">
-                  <a className="text-sm text-muted-foreground hover:text-foreground">
-                    Profil użytkownika
-                  </a>
-                </Link>
-              </nav>
-            )}
+              )}
+              <Link href="/profile">
+                <a className="text-sm text-muted-foreground hover:text-foreground">
+                  Profil użytkownika
+                </a>
+              </Link>
+            </nav>
           </div>
-          {user && (
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">
-                {user.email}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => logout()}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Wyloguj
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-muted-foreground">
+              {user?.email}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => logout()}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Wyloguj
+            </Button>
+          </div>
         </div>
       </div>
     </header>

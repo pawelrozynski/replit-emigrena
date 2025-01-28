@@ -14,6 +14,12 @@ import { formSections } from "@/lib/types";
 import type { WellbeingEntry } from "@db/schema";
 
 function EntryDialog({ entry }: { entry: WellbeingEntry }) {
+  const formatFieldValue = (value: any, type: string) => {
+    if (value === null || value === undefined) return "-";
+    if (type === "boolean") return value ? "Tak" : "Nie";
+    return value.toString();
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -44,11 +50,7 @@ function EntryDialog({ entry }: { entry: WellbeingEntry }) {
                     <div key={field.name}>
                       <p className="text-sm text-muted-foreground">{field.label}</p>
                       <p className="text-sm font-medium">
-                        {field.type === "boolean"
-                          ? value
-                            ? "Tak"
-                            : "Nie"
-                          : value.toString()}
+                        {formatFieldValue(value, field.type)}
                       </p>
                     </div>
                   );

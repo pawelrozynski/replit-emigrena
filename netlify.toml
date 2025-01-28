@@ -4,7 +4,6 @@ publish = "dist/public"
 functions = "netlify/functions"
 
 [functions]
-directory = "netlify/functions"
 node_bundler = "esbuild"
 external_node_modules = ["@neondatabase/serverless"]
 included_files = ["db/schema.*"]
@@ -22,4 +21,5 @@ status = 200
 force = true
 
 [build.environment]
+NODE_VERSION = "18.20.6"
 NODE_ENV = "production"

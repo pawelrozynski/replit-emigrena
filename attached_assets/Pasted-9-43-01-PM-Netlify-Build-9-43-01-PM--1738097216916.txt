@@ -1,0 +1,49 @@
+9:43:01 PM: Netlify Build                                                 
+9:43:01 PM: ────────────────────────────────────────────────────────────────
+9:43:01 PM: ​
+9:43:01 PM: ❯ Version
+9:43:01 PM:   @netlify/build 29.58.7
+9:43:01 PM: ​
+9:43:01 PM: ❯ Flags
+9:43:01 PM:   accountId: 679565a4ab4a98e314bf2326
+9:43:01 PM:   baseRelDir: true
+9:43:01 PM:   buildId: 679941399e4cd5598869728b
+9:43:01 PM:   deployId: 679941399e4cd5598869728d
+9:43:01 PM: ​
+9:43:01 PM: ❯ Current directory
+9:43:01 PM:   /opt/build/repo
+9:43:01 PM: ​
+9:43:01 PM: ❯ Config file
+9:43:01 PM:   No config file was defined: using default values.
+9:43:01 PM: ​
+9:43:01 PM: ❯ Context
+9:43:01 PM:   production
+9:43:01 PM: ​
+9:43:01 PM: Build command from Netlify app                                
+9:43:01 PM: ────────────────────────────────────────────────────────────────
+9:43:01 PM: ​
+9:43:01 PM: $ npm run build
+9:43:01 PM: > rest-express@1.0.0 build
+9:43:01 PM: > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+9:43:01 PM: vite v5.4.10 building for production...
+9:43:01 PM: transforming...
+9:43:04 PM: ✓ 2570 modules transformed.
+9:43:05 PM: rendering chunks...
+9:43:05 PM: computing gzip size...
+9:43:05 PM: ../dist/public/index.html                   1.58 kB │ gzip:   0.62 kB
+9:43:05 PM: ../dist/public/assets/index-DJr7Hui9.css   75.09 kB │ gzip:  12.09 kB
+9:43:05 PM: ../dist/public/assets/index-B35teRR4.js   502.53 kB │ gzip: 153.86 kB
+9:43:05 PM: 
+9:43:05 PM: (!) Some chunks are larger than 500 kB after minification. Consider:
+9:43:05 PM: - Using dynamic import() to code-split the application
+9:43:05 PM: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+9:43:05 PM: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+9:43:05 PM: ✓ built in 3.18s
+9:43:05 PM:   dist/index.js  22.6kb
+9:43:05 PM: ⚡ Done in 4ms
+9:43:05 PM: ​
+9:43:05 PM: (build.command completed in 3.6s)
+9:43:05 PM: ​
+9:43:05 PM: (Netlify Build completed in 3.9s)
+9:43:05 PM: Section completed: building
+9:43:10 PM: Finished processing build request in 24.432s

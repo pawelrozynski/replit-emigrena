@@ -9,4 +9,4 @@ vite.config.ts.*
 *.log
 coverage
 .vercel
-.netlify
+!netlify/functions

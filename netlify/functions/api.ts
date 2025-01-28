@@ -1,34 +1,59 @@
 import type { Handler } from "@netlify/functions";
 import { db } from "./db";
-import { wellbeingEntries, cmsContents, documentationVersions } from "../../db/schema";
-import { and, eq, desc, count } from "drizzle-orm";
+import { wellbeingEntries, documentationVersions } from "../../db/schema";
+import { desc } from "drizzle-orm";
 
 export const handler: Handler = async (event, context) => {
-  const path = event.path.replace("/.netlify/functions/api", "");
-  const method = event.httpMethod;
-
-  // Dodaj nagłówki CORS
+  // Poprawna konfiguracja CORS
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE'
+    'Access-Control-Allow-Origin': event.headers.origin || '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true'
   };
 
+  // Dodaj więcej logów dla debugowania
+  console.log('Request details:', {
+    path: event.path,
+    method: event.httpMethod,
+    headers: event.headers,
+    queryStringParameters: event.queryStringParameters,
+  });
+
+  // Obsługa preflight CORS
+  if (event.httpMethod === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
+    return {
+      statusCode: 204,
+      headers,
+      body: ''
+    };
+  }
+
   try {
+    const path = event.path.replace('/.netlify/functions/api', '');
+    console.log('Processing request for path:', path);
+
     // Obsługa endpointów API
-    if (path === "/entries" && method === "GET") {
+    if (path === '/entries' && event.httpMethod === 'GET') {
+      console.log('Fetching entries from database');
       const entries = await db.query.wellbeingEntries.findMany({
         orderBy: desc(wellbeingEntries.date),
       });
+      console.log('Found entries:', entries.length);
+
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify(entries),
+        body: JSON.stringify(entries)
       };
     }
 
-    if (path === "/entries" && method === "POST") {
-      const body = JSON.parse(event.body || "{}");
+    if (path === '/entries' && event.httpMethod === 'POST') {
+      console.log('Creating new entry');
+      const body = JSON.parse(event.body || '{}');
+      console.log('Request body:', body);
+
       const inputDate = new Date(body.date);
       const entryDate = new Date(Date.UTC(
         inputDate.getUTCFullYear(),
@@ -45,72 +70,48 @@ export const handler: Handler = async (event, context) => {
         })
         .returning();
 
+      console.log('Created entry:', entry);
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify(entry),
+        body: JSON.stringify(entry)
       };
     }
 
-    if (path === "/documentation" && method === "GET") {
+    if (path === '/documentation' && event.httpMethod === 'GET') {
+      console.log('Fetching documentation versions');
       const versions = await db.query.documentationVersions.findMany({
         orderBy: desc(documentationVersions.versionDate),
       });
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify(versions),
-      };
-    }
-
-    if (path === "/documentation" && method === "POST") {
-      const body = JSON.parse(event.body || "{}");
-      const [version] = await db
-        .insert(documentationVersions)
-        .values({
-          content: body.content,
-          versionDate: new Date(body.versionDate),
-        })
-        .returning();
+      console.log('Found versions:', versions.length);
 
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify(version),
+        body: JSON.stringify(versions)
       };
     }
 
-    if (path === "/cms" && method === "GET") {
-      const contents = await db.query.cmsContents.findMany({
-        orderBy: desc(cmsContents.updatedAt),
-      });
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify(contents),
-      };
-    }
-
-    // Obsługa CORS preflight
-    if (method === "OPTIONS") {
-      return {
-        statusCode: 204,
-        headers,
-        body: "",
-      };
-    }
-
+    console.log('Route not found:', path);
     return {
       statusCode: 404,
       headers,
-      body: JSON.stringify({ error: "Not found" }),
+      body: JSON.stringify({ error: 'Not found', path })
     };
   } catch (error) {
-    console.error("API error:", error);
+    console.error('API error:', error);
+    // W środowisku produkcyjnym nie pokazujemy szczegółów błędu
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? error.message 
+      : 'Internal server error';
+
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: "Internal server error" }),
+      body: JSON.stringify({ 
+        error: errorMessage,
+        timestamp: new Date().toISOString()
+      })
     };
   }
 };

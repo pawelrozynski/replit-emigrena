@@ -1,26 +1,16 @@
 # Instrukcje wdrożeniowe aplikacji eMigrena
 
 ## 1. Konfiguracja bazy danych (Supabase)
-
-1. Utwórz konto na Supabase (https://supabase.com)
-2. Utwórz nowy projekt:
-   - Nazwa: emigrena-prod
-   - Region: wybierz najbliższy (np. Frankfurt)
-   - Plan: Free tier
-3. Po utworzeniu projektu:
-   - Zapisz `Database URL` z zakładki Settings > Database
-   - Zapisz `anon` i `service_role` keys z zakładki Settings > API
+✅ Wykonane:
+- Utworzono bazę danych: emigrena-prod
+- Database URL: postgresql://postgres:Migrena2025PL@db.xmaeareywhvnguiduhho.supabase.co:5432/postgres
 
 ## 2. Konfiguracja DNS dla subdomeny
-
-1. Zaloguj się do panelu zarządzania domeną pawelrozynski.com
-2. Dodaj nowy rekord CNAME:
-   - Name: dobrostan
-   - Value: [nazwa-twojego-projektu].netlify.app
-   - TTL: 3600 (lub Auto)
+✅ Wykonane:
+- Dodano rekord CNAME dla dobrostan.pawelrozynski.com
 
 ## 3. Konfiguracja Netlify
-
+Do wykonania:
 1. Połącz repozytorium GitHub:
    - Zaloguj się do Netlify
    - New site from Git > GitHub > Wybierz repozytorium replit-emigrena
@@ -31,7 +21,7 @@
 
 3. Dodaj zmienne środowiskowe w Settings > Environment variables:
    ```
-   DATABASE_URL=[URL z Supabase]
+   DATABASE_URL=postgresql://postgres:Migrena2025PL@db.xmaeareywhvnguiduhho.supabase.co:5432/postgres
    SENDGRID_API_KEY=[obecny klucz]
    ```
 

@@ -1,7 +1,7 @@
 import type { Handler } from "@netlify/functions";
 import { db } from "./db";
-import { wellbeingEntries, cmsContents } from "../../db/schema";
-import { and, eq, desc, count } from "drizzle-orm";
+import { cmsContents } from "../../db/schema";
+import { desc } from "drizzle-orm";
 
 export const handler: Handler = async (event, context) => {
   const headers = {
@@ -13,13 +13,17 @@ export const handler: Handler = async (event, context) => {
   };
 
   // Debug logging
+  console.log('Environment check:', {
+    nodeEnv: process.env.NODE_ENV,
+    hasDbUrl: !!process.env.DATABASE_URL,
+  });
+
   console.log('Request details:', {
     path: event.path,
     rawUrl: event.rawUrl,
     httpMethod: event.httpMethod,
     headers: event.headers,
-    body: event.body,
-    params: event.queryStringParameters,
+    queryParams: event.queryStringParameters,
   });
 
   if (event.httpMethod === 'OPTIONS') {
@@ -31,76 +35,49 @@ export const handler: Handler = async (event, context) => {
   }
 
   try {
-    // Extract the actual path by removing both /api and /.netlify/functions/api prefixes
-    const path = event.path
-      .replace(/^\/\.netlify\/functions\/api/, '')
-      .replace(/^\/api/, '')
-      || '/';
-
+    // Simple path handling
+    const path = event.path.replace(/^\/\.netlify\/functions\/api/, '') || '/';
     console.log('Processed path:', path);
+
+    // Test endpoint to verify function is working
+    if (path === '/test') {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          message: "API function is working",
+          timestamp: new Date().toISOString()
+        })
+      };
+    }
 
     // Pobieranie treści CMS
     if (path === '/cms' && event.httpMethod === 'GET') {
       console.log('Fetching CMS contents...');
-      const contents = await db.query.cmsContents.findMany({
-        orderBy: desc(cmsContents.updatedAt),
-      });
-      console.log('Found CMS contents:', contents.length);
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify(contents)
-      };
-    }
-
-    // Dodawanie treści CMS
-    if (path === '/cms' && event.httpMethod === 'POST') {
-      const body = JSON.parse(event.body || '{}');
-      const [content] = await db
-        .insert(cmsContents)
-        .values({
-          key: body.key,
-          content: body.content,
-        })
-        .returning();
-
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify(content)
-      };
-    }
-
-    // Aktualizacja treści CMS
-    if (path.match(/^\/cms\/\d+$/) && event.httpMethod === 'PUT') {
-      const id = parseInt(path.split('/')[2], 10);
-      const body = JSON.parse(event.body || '{}');
-
-      const [content] = await db
-        .update(cmsContents)
-        .set({
-          ...body,
-          updatedAt: new Date(),
-        })
-        .where(eq(cmsContents.id, id))
-        .returning();
-
-      if (!content) {
+      try {
+        const contents = await db.query.cmsContents.findMany({
+          orderBy: desc(cmsContents.updatedAt),
+        });
+        console.log('Found CMS contents:', contents.length);
         return {
-          statusCode: 404,
+          statusCode: 200,
           headers,
-          body: JSON.stringify({ error: "Nie znaleziono treści" })
+          body: JSON.stringify(contents)
+        };
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({
+            error: "Database error",
+            details: process.env.NODE_ENV === 'development' ? (dbError as Error).message : undefined
+          })
         };
       }
-
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify(content)
-      };
     }
 
-    // Logowanie nieobsłużonej ścieżki
+
     console.log('Unhandled path:', {
       originalPath: event.path,
       processedPath: path,

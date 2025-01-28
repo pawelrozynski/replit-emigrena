@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useCms } from '@/hooks/use-cms';
 import type { User } from '@db/schema';
 
 interface LoginCredentials {
@@ -9,6 +10,7 @@ interface LoginCredentials {
 
 export function useUser() {
   const { toast } = useToast();
+  const { getContent } = useCms();
   const queryClient = useQueryClient();
 
   const { data: user, isLoading } = useQuery<User | null>({
@@ -81,7 +83,8 @@ export function useUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
-        title: "Zarejestrowano pomyślnie",
+        title: "Rejestracja pomyślna",
+        description: getContent("register_success_message"),
         variant: "default"
       });
     },

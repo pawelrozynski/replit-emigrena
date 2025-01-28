@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@/hooks/use-user";
+import { useCms } from "@/hooks/use-cms";
 import { Loader2 } from "lucide-react";
 
 const authSchema = z.object({
@@ -29,6 +30,7 @@ export default function AuthPage() {
   const { login, register, isLoading } = useUser();
   const [location] = useLocation();
   const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const { getContent } = useCms();
 
   useEffect(() => {
     const params = new URLSearchParams(location.split('?')[1]);
@@ -68,8 +70,8 @@ export default function AuthPage() {
           <CardTitle>{isLogin ? "Logowanie" : "Rejestracja"}</CardTitle>
           <CardDescription>
             {isLogin 
-              ? "Zaloguj się do swojego konta eMigrena" 
-              : "Utwórz nowe konto w aplikacji eMigrena"}
+              ? getContent("login_instructions") 
+              : getContent("registration_instructions")}
           </CardDescription>
         </CardHeader>
         <Form {...form}>

@@ -13,11 +13,13 @@ included_files = ["db/schema.*"]
 from = "/api/*"
 to = "/.netlify/functions/api/:splat"
 status = 200
+force = true
 
 [[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200
+force = true
 
 [build.environment]
 NODE_ENV = "production"

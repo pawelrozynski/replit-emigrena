@@ -1,6 +1,6 @@
 import type { Handler } from "@netlify/functions";
 import { db } from "./db";
-import { wellbeingEntries, documentationVersions, cmsContents } from "../../db/schema";
+import { wellbeingEntries, cmsContents } from "../../db/schema";
 import { and, eq, desc, count } from "drizzle-orm";
 
 export const handler: Handler = async (event, context) => {

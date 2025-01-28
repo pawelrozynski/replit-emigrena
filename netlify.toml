@@ -10,6 +10,11 @@ external_node_modules = ["@neondatabase/serverless"]
 included_files = ["db/schema.*"]
 
 [[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/api/:splat"
+status = 200
+
+[[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200

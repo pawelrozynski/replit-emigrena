@@ -12,13 +12,14 @@ export const handler: Handler = async (event, context) => {
     'Content-Type': 'application/json'
   };
 
-  // Logowanie wszystkich istotnych informacji o żądaniu
+  // Debug logging
   console.log('Request details:', {
     path: event.path,
     rawUrl: event.rawUrl,
     httpMethod: event.httpMethod,
     headers: event.headers,
     body: event.body,
+    params: event.queryStringParameters,
   });
 
   if (event.httpMethod === 'OPTIONS') {
@@ -30,8 +31,12 @@ export const handler: Handler = async (event, context) => {
   }
 
   try {
-    // Uproszczone parsowanie ścieżki - usuwamy /.netlify/functions/api
-    const path = event.path.replace(/^\/\.netlify\/functions\/api/, '');
+    // Extract the actual path by removing both /api and /.netlify/functions/api prefixes
+    const path = event.path
+      .replace(/^\/\.netlify\/functions\/api/, '')
+      .replace(/^\/api/, '')
+      || '/';
+
     console.log('Processed path:', path);
 
     // Pobieranie treści CMS
@@ -96,7 +101,12 @@ export const handler: Handler = async (event, context) => {
     }
 
     // Logowanie nieobsłużonej ścieżki
-    console.log('Unhandled path:', path);
+    console.log('Unhandled path:', {
+      originalPath: event.path,
+      processedPath: path,
+      rawUrl: event.rawUrl,
+    });
+
     return {
       statusCode: 404,
       headers,

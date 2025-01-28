@@ -1,11 +1,11 @@
 export function getApiUrl(path: string): string {
-  const apiPath = path.startsWith('/') ? path : `/${path}`;
+  const apiPath = path.startsWith('/') ? path.substring(1) : path;
 
   // W trybie developerskim używamy lokalnego serwera Express
   if (import.meta.env.DEV) {
-    return `${window.location.origin}${apiPath}`;
+    return `/api/${apiPath}`;
   }
 
   // W produkcji używamy Netlify Functions
-  return `/.netlify/functions/api${apiPath}`;
+  return `/.netlify/functions/${apiPath}`;
 }

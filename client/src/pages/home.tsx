@@ -4,12 +4,21 @@ import { Loader2 } from "lucide-react";
 
 export default function Home() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['/api/hello'],
+    queryKey: ['hello'],
     queryFn: async () => {
-      const response = await fetch(getApiUrl('/api/hello'));
+      console.log('Calling API endpoint:', getApiUrl('hello'));
+      const response = await fetch(getApiUrl('hello'));
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const text = await response.text();
+        console.error('API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: text
+        });
+        throw new Error(`HTTP error! status: ${response.status}\n${text}`);
       }
+
       return response.json();
     }
   });
@@ -27,6 +36,9 @@ export default function Home() {
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <h1 className="text-xl font-semibold text-red-500 mb-2">Błąd połączenia</h1>
         <p className="text-gray-600">{(error as Error).message}</p>
+        <pre className="mt-4 p-4 bg-gray-100 rounded-lg text-sm overflow-auto max-w-full">
+          {JSON.stringify(error, null, 2)}
+        </pre>
       </div>
     );
   }

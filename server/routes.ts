@@ -8,25 +8,6 @@ import { and, eq, desc, count } from "drizzle-orm";
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
-  // Add hello endpoint for testing
-  app.get("/api/hello", (req, res) => {
-    console.log("Hello endpoint called:", {
-      path: req.path,
-      method: req.method,
-      headers: req.headers
-    });
-
-    const response = {
-      message: "Hello from Express server!",
-      timestamp: new Date().toISOString(),
-      path: req.path,
-      method: req.method
-    };
-
-    console.log("Sending response:", response);
-    res.json(response);
-  });
-
   app.get("/api/entries", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).send("Nie zalogowano");

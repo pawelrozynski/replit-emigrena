@@ -10,3 +10,4 @@ vite.config.ts.*
 coverage
 .vercel
 !netlify/functions
+.netlify

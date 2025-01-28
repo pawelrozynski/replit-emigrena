@@ -11,33 +11,23 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <Link href="/">
-              <a className="text-2xl font-semibold text-primary hover:text-primary/90">
-                eMigrena
-              </a>
+            <Link href="/" className="text-2xl font-semibold text-primary hover:text-primary/90">
+              eMigrena
             </Link>
             <nav className="ml-10 flex items-center space-x-4">
-              <Link href="/new-entry">
-                <a className="text-sm text-muted-foreground hover:text-foreground">
-                  Nowy wpis
-                </a>
+              <Link href="/new-entry" className="text-sm text-muted-foreground hover:text-foreground">
+                Nowy wpis
               </Link>
-              <Link href="/entries">
-                <a className="text-sm text-muted-foreground hover:text-foreground">
-                  Historia wpisów
-                </a>
+              <Link href="/entries" className="text-sm text-muted-foreground hover:text-foreground">
+                Historia wpisów
               </Link>
               {user?.email === 'prozynski@kanga.exchange' && (
-                <Link href="/admin">
-                  <a className="text-sm text-muted-foreground hover:text-foreground">
-                    Panel Admina
-                  </a>
+                <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">
+                  Panel Admina
                 </Link>
               )}
-              <Link href="/profile">
-                <a className="text-sm text-muted-foreground hover:text-foreground">
-                  Profil użytkownika
-                </a>
+              <Link href="/profile" className="text-sm text-muted-foreground hover:text-foreground">
+                Profil użytkownika
               </Link>
             </nav>
           </div>

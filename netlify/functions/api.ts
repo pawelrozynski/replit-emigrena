@@ -12,6 +12,15 @@ export const handler: Handler = async (event, context) => {
     'Content-Type': 'application/json'
   };
 
+  // Logowanie wszystkich istotnych informacji o żądaniu
+  console.log('Request details:', {
+    path: event.path,
+    rawUrl: event.rawUrl,
+    httpMethod: event.httpMethod,
+    headers: event.headers,
+    body: event.body,
+  });
+
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -21,14 +30,17 @@ export const handler: Handler = async (event, context) => {
   }
 
   try {
-    const path = event.rawUrl.replace(/.*\/api/, '');
-    console.log('Processing request:', { path, method: event.httpMethod, rawUrl: event.rawUrl });
+    // Uproszczone parsowanie ścieżki - usuwamy /.netlify/functions/api
+    const path = event.path.replace(/^\/\.netlify\/functions\/api/, '');
+    console.log('Processed path:', path);
 
     // Pobieranie treści CMS
     if (path === '/cms' && event.httpMethod === 'GET') {
+      console.log('Fetching CMS contents...');
       const contents = await db.query.cmsContents.findMany({
         orderBy: desc(cmsContents.updatedAt),
       });
+      console.log('Found CMS contents:', contents.length);
       return {
         statusCode: 200,
         headers,
@@ -83,11 +95,19 @@ export const handler: Handler = async (event, context) => {
       };
     }
 
+    // Logowanie nieobsłużonej ścieżki
+    console.log('Unhandled path:', path);
     return {
       statusCode: 404,
       headers,
-      body: JSON.stringify({ error: "Not found", path })
+      body: JSON.stringify({
+        error: "Not found",
+        path,
+        originalPath: event.path,
+        rawUrl: event.rawUrl
+      })
     };
+
   } catch (error) {
     console.error('API error:', error);
     return {

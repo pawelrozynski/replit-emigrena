@@ -1,28 +1,18 @@
 import type { Handler } from "@netlify/functions";
 import { db } from "./db";
-import { wellbeingEntries, documentationVersions } from "../../db/schema";
-import { desc } from "drizzle-orm";
+import { wellbeingEntries, documentationVersions, cmsContents } from "../../db/schema";
+import { and, eq, desc, count } from "drizzle-orm";
 
 export const handler: Handler = async (event, context) => {
-  // Poprawna konfiguracja CORS
   const headers = {
     'Access-Control-Allow-Origin': event.headers.origin || '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true'
+    'Access-Control-Allow-Credentials': 'true',
+    'Content-Type': 'application/json'
   };
 
-  // Dodaj więcej logów dla debugowania
-  console.log('Request details:', {
-    path: event.path,
-    method: event.httpMethod,
-    headers: event.headers,
-    queryStringParameters: event.queryStringParameters,
-  });
-
-  // Obsługa preflight CORS
   if (event.httpMethod === 'OPTIONS') {
-    console.log('Handling CORS preflight request');
     return {
       statusCode: 204,
       headers,
@@ -32,16 +22,13 @@ export const handler: Handler = async (event, context) => {
 
   try {
     const path = event.path.replace('/.netlify/functions/api', '');
-    console.log('Processing request for path:', path);
+    console.log('Processing request:', { path, method: event.httpMethod });
 
-    // Obsługa endpointów API
+    // Pobieranie wpisów
     if (path === '/entries' && event.httpMethod === 'GET') {
-      console.log('Fetching entries from database');
       const entries = await db.query.wellbeingEntries.findMany({
         orderBy: desc(wellbeingEntries.date),
       });
-      console.log('Found entries:', entries.length);
-
       return {
         statusCode: 200,
         headers,
@@ -49,11 +36,9 @@ export const handler: Handler = async (event, context) => {
       };
     }
 
+    // Dodawanie nowego wpisu
     if (path === '/entries' && event.httpMethod === 'POST') {
-      console.log('Creating new entry');
       const body = JSON.parse(event.body || '{}');
-      console.log('Request body:', body);
-
       const inputDate = new Date(body.date);
       const entryDate = new Date(Date.UTC(
         inputDate.getUTCFullYear(),
@@ -67,10 +52,11 @@ export const handler: Handler = async (event, context) => {
         .values({
           ...body,
           date: entryDate,
+          totalSleepDuration: body.totalSleepDuration || null,
+          deepSleepDuration: body.deepSleepDuration || null,
         })
         .returning();
 
-      console.log('Created entry:', entry);
       return {
         statusCode: 200,
         headers,
@@ -78,13 +64,24 @@ export const handler: Handler = async (event, context) => {
       };
     }
 
+    // Liczenie wpisów
+    if (path === '/entries/count' && event.httpMethod === 'GET') {
+      const [result] = await db
+        .select({ count: count() })
+        .from(wellbeingEntries);
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(result.count)
+      };
+    }
+
+    // Pobieranie dokumentacji
     if (path === '/documentation' && event.httpMethod === 'GET') {
-      console.log('Fetching documentation versions');
       const versions = await db.query.documentationVersions.findMany({
         orderBy: desc(documentationVersions.versionDate),
       });
-      console.log('Found versions:', versions.length);
-
       return {
         statusCode: 200,
         headers,
@@ -92,24 +89,104 @@ export const handler: Handler = async (event, context) => {
       };
     }
 
-    console.log('Route not found:', path);
+    // Dodawanie dokumentacji
+    if (path === '/documentation' && event.httpMethod === 'POST') {
+      const body = JSON.parse(event.body || '{}');
+      const [version] = await db
+        .insert(documentationVersions)
+        .values({
+          content: body.content,
+          versionDate: new Date(body.versionDate),
+        })
+        .returning();
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(version)
+      };
+    }
+
+    // Pobieranie treści CMS
+    if (path === '/cms' && event.httpMethod === 'GET') {
+      const contents = await db.query.cmsContents.findMany({
+        orderBy: desc(cmsContents.updatedAt),
+      });
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(contents)
+      };
+    }
+
+    // Dodawanie treści CMS
+    if (path === '/cms' && event.httpMethod === 'POST') {
+      const body = JSON.parse(event.body || '{}');
+      const [content] = await db
+        .insert(cmsContents)
+        .values({
+          key: body.key,
+          content: body.content,
+        })
+        .returning();
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(content)
+      };
+    }
+
+    // Aktualizacja treści CMS
+    if (path.startsWith('/cms/') && event.httpMethod === 'PUT') {
+      const id = parseInt(path.split('/')[2], 10);
+      const body = JSON.parse(event.body || '{}');
+
+      const updateData: { content: string; key?: string } = {
+        content: body.content,
+      };
+
+      if (body.key) {
+        updateData.key = body.key;
+      }
+
+      const [content] = await db
+        .update(cmsContents)
+        .set({
+          ...updateData,
+          updatedAt: new Date(),
+        })
+        .where(eq(cmsContents.id, id))
+        .returning();
+
+      if (!content) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ error: "Nie znaleziono treści" })
+        };
+      }
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(content)
+      };
+    }
+
     return {
       statusCode: 404,
       headers,
-      body: JSON.stringify({ error: 'Not found', path })
+      body: JSON.stringify({ error: "Not found", path })
     };
   } catch (error) {
     console.error('API error:', error);
-    // W środowisku produkcyjnym nie pokazujemy szczegółów błędu
-    const errorMessage = process.env.NODE_ENV === 'development' 
-      ? error.message 
-      : 'Internal server error';
-
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        error: errorMessage,
+      body: JSON.stringify({
+        error: "Internal server error",
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
         timestamp: new Date().toISOString()
       })
     };

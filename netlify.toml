@@ -21,10 +21,3 @@ status = 200
 
 [build.environment]
 NODE_ENV = "production"
-
-[dev]
-framework = "#custom"
-command = "npm run dev"
-targetPort = 5000
-port = 8888
-publish = "dist/public"

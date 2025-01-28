@@ -137,10 +137,30 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
+      const updateData: { content: string; key?: string } = {
+        content: req.body.content,
+      };
+
+      if (req.body.key) {
+        // Sprawdź czy nowy klucz nie koliduje z istniejącymi
+        if (req.body.key !== req.body.oldKey) {
+          const [existingContent] = await db
+            .select()
+            .from(cmsContents)
+            .where(eq(cmsContents.key, req.body.key))
+            .limit(1);
+
+          if (existingContent) {
+            return res.status(400).send("Klucz już istnieje");
+          }
+        }
+        updateData.key = req.body.key;
+      }
+
       const [content] = await db
         .update(cmsContents)
         .set({
-          content: req.body.content,
+          ...updateData,
           updatedAt: new Date(),
         })
         .where(eq(cmsContents.id, req.params.id))

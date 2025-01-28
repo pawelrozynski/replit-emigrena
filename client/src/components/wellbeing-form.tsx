@@ -15,6 +15,46 @@ import { useCms } from "@/hooks/use-cms";
 import type { WellbeingEntry } from "@db/schema";
 import { useWellbeing } from "@/hooks/use-wellbeing";
 
+const defaultLabels = {
+  // Sleep parameters
+  sleep_quality_field_label: "Jakość snu",
+  total_sleep_duration_field_label: "Całkowity czas snu",
+  deep_sleep_duration_field_label: "Czas głębokiego snu",
+  slept_with_window_open_field_label: "Spanie przy otwartym oknie",
+  had_good_dreams_field_label: "Przyjemne sny",
+  had_bad_dreams_field_label: "Koszmary",
+  woke_up_to_toilet_field_label: "Wybudzenie do toalety",
+  sleep_time_field_label: "Godzina położenia się spać",
+  wake_time_field_label: "Godzina wstania",
+  neck_stiffness_field_label: "Sztywność karku",
+  time_to_get_up_field_label: "Czas do wstania (minuty)",
+
+  // Wellbeing
+  work_motivation_field_label: "Motywacja do pracy",
+  mood_field_label: "Nastrój",
+  social_satisfaction_field_label: "Zadowolenie z kontaktów społecznych",
+  physical_activity_desire_field_label: "Chęć do aktywności fizycznej",
+  headache_field_label: "Intensywność bólu głowy",
+  sleepiness_field_label: "Senność",
+  physical_fatigue_field_label: "Zmęczenie fizyczne",
+
+  // Activity and diet
+  steps_count_field_label: "Liczba kroków",
+  full_meals_count_field_label: "Liczba pełnych posiłków",
+  fruits_veggies_portions_field_label: "Porcje owoców i warzyw",
+  alcohol_ml_field_label: "Spożycie alkoholu (ml)",
+  sweets_portions_field_label: "Porcje słodyczy",
+  sweet_drinks_portions_field_label: "Porcje słodkich napojów",
+
+  // Sections
+  sleep_parameters_section_title: "Parametry snu",
+  sleep_parameters_section_description: "Informacje o jakości i ilości snu",
+  wellbeing_section_title: "Samopoczucie",
+  wellbeing_section_description: "Ocena samopoczucia w ciągu dnia",
+  activity_diet_section_title: "Aktywność i dieta",
+  activity_diet_section_description: "Informacje o aktywności fizycznej i diecie"
+};
+
 export function WellbeingForm() {
   const [date, setDate] = useState<Date>(new Date());
   const { createEntry } = useWellbeing();
@@ -51,7 +91,6 @@ export function WellbeingForm() {
   });
 
   const onSubmit = (data: Omit<WellbeingEntry, 'userId' | 'id' | 'date' | 'createdAt'>) => {
-    // Ustaw datę na północ UTC wybranego dnia
     const year = date.getFullYear();
     const month = date.getMonth();
     const day = date.getDate();
@@ -73,6 +112,11 @@ export function WellbeingForm() {
       ...data,
       date: submitDate,
     } as WellbeingEntry);
+  };
+
+  const getLabel = (key: string) => {
+    const content = getContent(key);
+    return content === key ? defaultLabels[key as keyof typeof defaultLabels] || key : content;
   };
 
   return (
@@ -125,8 +169,8 @@ export function WellbeingForm() {
         {formSections.map((section) => (
           <Card key={section.title}>
             <CardHeader>
-              <CardTitle>{getContent(section.title)}</CardTitle>
-              <CardDescription>{getContent(section.description)}</CardDescription>
+              <CardTitle>{getLabel(section.title)}</CardTitle>
+              <CardDescription>{getLabel(section.description)}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
               {section.fields.map((field) => (
@@ -136,8 +180,8 @@ export function WellbeingForm() {
                   name={field.name as keyof Omit<WellbeingEntry, 'userId' | 'id' | 'date' | 'createdAt'>}
                   render={({ field: formField }) => (
                     <FormItem>
-                      <FormLabel>{field.label}</FormLabel>
-                      <FormDescription>{getContent(field.description)}</FormDescription>
+                      <FormLabel>{getLabel(field.label)}</FormLabel>
+                      <FormDescription>{getLabel(field.description)}</FormDescription>
                       <FormControl>
                         {field.type === "boolean" ? (
                           <div className="flex items-center gap-2">

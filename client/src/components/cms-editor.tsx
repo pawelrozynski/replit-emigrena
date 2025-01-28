@@ -13,7 +13,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Edit2, Save } from "lucide-react";
 import type { CmsContent } from "@db/schema";
 
 export function CmsEditor() {
@@ -21,6 +21,7 @@ export function CmsEditor() {
   const queryClient = useQueryClient();
   const [newKey, setNewKey] = useState("");
   const [newContent, setNewContent] = useState("");
+  const [editingKey, setEditingKey] = useState<{ id: string, key: string } | null>(null);
 
   const { data: contents = [], isLoading } = useQuery<CmsContent[]>({
     queryKey: ['/api/cms'],
@@ -60,11 +61,11 @@ export function CmsEditor() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: { id: string; content: string }) => {
+    mutationFn: async (data: { id: string; content: string; key?: string }) => {
       const res = await fetch(`/api/cms/${data.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: data.content }),
+        body: JSON.stringify({ content: data.content, key: data.key }),
         credentials: 'include',
       });
 
@@ -80,6 +81,7 @@ export function CmsEditor() {
         title: "Treść zaktualizowana pomyślnie",
         variant: "default",
       });
+      setEditingKey(null);
     },
     onError: (error: Error) => {
       toast({
@@ -139,21 +141,59 @@ export function CmsEditor() {
           <TableBody>
             {contents.map((content) => (
               <TableRow key={content.id}>
-                <TableCell>{content.key}</TableCell>
+                <TableCell>
+                  {editingKey?.id === content.id ? (
+                    <Input
+                      value={editingKey.key}
+                      onChange={(e) => setEditingKey({ id: content.id, key: e.target.value })}
+                    />
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <span>{content.key}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingKey({ id: content.id, key: content.key })}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell>
                   <Textarea
                     defaultValue={content.content}
                     onChange={(e) => {
                       const newValue = e.target.value;
                       if (newValue !== content.content) {
-                        updateMutation.mutate({ id: content.id, content: newValue });
+                        updateMutation.mutate({
+                          id: content.id,
+                          content: newValue,
+                          key: editingKey?.id === content.id ? editingKey.key : undefined
+                        });
                       }
                     }}
                     rows={2}
                   />
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm text-muted-foreground">
+                  {editingKey?.id === content.id && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        updateMutation.mutate({
+                          id: content.id,
+                          content: content.content,
+                          key: editingKey.key
+                        });
+                      }}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Zapisz klucz
+                    </Button>
+                  )}
+                  <span className="text-sm text-muted-foreground block mt-2">
                     Ostatnia aktualizacja:<br />
                     {new Date(content.updatedAt).toLocaleString('pl')}
                   </span>

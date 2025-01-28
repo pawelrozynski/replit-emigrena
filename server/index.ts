@@ -5,6 +5,9 @@ import { limiter, sessionMiddleware, healthCheck } from "./middleware";
 
 const app = express();
 
+// Trust proxy - required for rate limiting behind Replit's proxy
+app.set('trust proxy', 1);
+
 // Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

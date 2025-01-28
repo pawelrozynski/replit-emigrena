@@ -73,10 +73,30 @@ export function DocumentationEditor() {
     try {
       const content = document.createElement('div');
       content.innerHTML = `
-        <div style="padding: 20px; font-family: Arial, sans-serif;">
-          <h1 style="color: #333;">Dokumentacja eMigrena</h1>
-          <p style="color: #666;">Wersja z dnia: ${format(new Date(version.versionDate), "PP", { locale: pl })}</p>
-          <div style="margin-top: 20px; white-space: pre-wrap;">${version.content}</div>
+        <div style="
+          padding: 40px;
+          font-family: Arial, sans-serif;
+          font-size: 12px;
+          line-height: 1.5;
+          max-width: 800px;
+          margin: 0 auto;
+        ">
+          <h1 style="
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+          ">Dokumentacja eMigrena</h1>
+          <p style="
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+            text-align: center;
+          ">Wersja z dnia: ${format(new Date(version.versionDate), "PP", { locale: pl })}</p>
+          <div style="
+            white-space: pre-wrap;
+            text-align: justify;
+          ">${version.content.replace(/\n\n/g, '<div style="height: 20px;"></div>')}</div>
         </div>
       `;
       document.body.appendChild(content);
@@ -84,7 +104,9 @@ export function DocumentationEditor() {
       const canvas = await html2canvas(content, {
         scale: 2,
         useCORS: true,
-        logging: false
+        logging: false,
+        windowWidth: 1200,
+        width: 800,
       });
 
       document.body.removeChild(content);
@@ -95,11 +117,48 @@ export function DocumentationEditor() {
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 30;
 
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      // Oblicz ile stron potrzebujemy
+      const pageHeight = pdfHeight - 20; // Margines 10mm na górze i dole
+      const imgAspectRatio = imgHeight / imgWidth;
+      const pageWidth = pdfWidth - 20; // Margines 10mm po bokach
+      const imgFitWidth = pageWidth;
+      const imgFitHeight = imgFitWidth * imgAspectRatio;
+      const pages = Math.ceil(imgFitHeight / pageHeight);
+
+      // Podziel obraz na strony
+      for (let page = 0; page < pages; page++) {
+        if (page > 0) {
+          pdf.addPage();
+        }
+
+        const sourceY = page * (canvas.height / pages);
+        const sourceHeight = canvas.height / pages;
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = sourceHeight;
+        const ctx = tempCanvas.getContext('2d');
+
+        if (ctx) {
+          ctx.drawImage(
+            canvas,
+            0, sourceY, canvas.width, sourceHeight,
+            0, 0, canvas.width, sourceHeight
+          );
+
+          const pageImgData = tempCanvas.toDataURL('image/png');
+          pdf.addImage(
+            pageImgData,
+            'PNG',
+            10, // margines lewy
+            10, // margines górny
+            pageWidth,
+            Math.min(pageHeight, imgFitHeight - (page * pageHeight))
+          );
+        }
+      }
+
       pdf.save(`dokumentacja-emigrena-${format(new Date(version.versionDate), "yyyy-MM-dd")}.pdf`);
 
       toast({

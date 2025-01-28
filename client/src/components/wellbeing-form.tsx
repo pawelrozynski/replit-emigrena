@@ -49,12 +49,17 @@ export function WellbeingForm() {
   });
 
   const onSubmit = (data: Omit<NewWellbeingEntry, 'userId' | 'date'>) => {
-    // Validate future date
+    // Ustaw datę na północ UTC wybranego dnia
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    const submitDate = new Date(Date.UTC(year, month, day));
+
+    // Sprawdź czy data nie jest z przyszłości
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
 
-    if (date > today) {
+    if (submitDate > today) {
       form.setError('root', {
         type: 'manual',
         message: 'Nie można dodawać wpisów z przyszłą datą'
@@ -64,7 +69,7 @@ export function WellbeingForm() {
 
     createEntry({
       ...data,
-      date,
+      date: submitDate,
     } as NewWellbeingEntry);
   };
 

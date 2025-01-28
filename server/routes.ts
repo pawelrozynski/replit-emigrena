@@ -31,28 +31,35 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      // Wyświetlamy szczegółowe informacje o otrzymanej dacie
+      // Parsujemy datę z requestu, która powinna być w formacie UTC
+      const inputDate = new Date(req.body.date);
+
+      // Tworzymy nową datę w UTC, zachowując dokładnie ten sam dzień
+      const entryDate = new Date(Date.UTC(
+        inputDate.getUTCFullYear(),
+        inputDate.getUTCMonth(),
+        inputDate.getUTCDate(),
+        12, // ustawiamy na południe UTC aby uniknąć problemów ze strefami czasowymi
+        0,
+        0,
+        0
+      ));
+
+      // Debug logowanie
       console.log('Otrzymana data z formularza:', req.body.date);
-
-      // Tworzymy datę zachowując wybrany dzień
-      const date = new Date(req.body.date);
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const day = date.getDate();
-
-      // Tworzymy nową datę ustawiając czas na 12:00 UTC
-      const entryDate = new Date(Date.UTC(year, month, day, 12, 0, 0));
-
       console.log('Data po konwersji:', entryDate.toISOString());
       console.log('Lokalny czas utworzonej daty:', entryDate.toString());
 
       // Sprawdzamy czy data nie jest z przyszłości
       const today = new Date();
       const todayUtc = new Date(Date.UTC(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate(),
-        12, 0, 0
+        today.getUTCFullYear(),
+        today.getUTCMonth(),
+        today.getUTCDate(),
+        12,
+        0,
+        0,
+        0
       ));
 
       if (entryDate > todayUtc) {

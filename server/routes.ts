@@ -31,13 +31,21 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      // Poprawka: zachowujemy oryginalną datę bez modyfikacji strefy czasowej
-      const entryDate = new Date(req.body.date);
+      // Tworzymy datę bez modyfikowania strefy czasowej
+      const dateParts = req.body.date.split('T')[0].split('-');
+      const entryDate = new Date(Date.UTC(
+        parseInt(dateParts[0]), // rok
+        parseInt(dateParts[1]) - 1, // miesiąc (0-11)
+        parseInt(dateParts[2]), // dzień
+        12, // ustawiamy na południe UTC
+        0,
+        0
+      ));
 
-      // Ustawiamy czas na środek dnia, aby uniknąć problemów ze strefami czasowymi
-      entryDate.setUTCHours(12, 0, 0, 0);
+      console.log('Otrzymana data:', req.body.date);
+      console.log('Przetworzona data UTC:', entryDate.toISOString());
 
-      // Check if the date is in the future
+      // Sprawdzamy czy data nie jest z przyszłości
       const today = new Date();
       today.setUTCHours(12, 0, 0, 0);
 
@@ -45,7 +53,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Nie można dodawać wpisów z przyszłą datą" });
       }
 
-      // Check if entry already exists for this date
+      // Sprawdzamy czy wpis na ten dzień już istnieje
       const existingEntry = await db.query.wellbeingEntries.findFirst({
         where: and(
           eq(wellbeingEntries.userId, req.user.id),
@@ -57,7 +65,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Wpis na ten dzień już istnieje" });
       }
 
-      // Prepare the entry data
+      // Przygotowujemy dane wpisu
       const entryData = {
         ...req.body,
         userId: req.user.id,
@@ -66,7 +74,7 @@ export function registerRoutes(app: Express): Server {
         deepSleepDuration: req.body.deepSleepDuration || null,
       };
 
-      // Insert the entry
+      // Zapisujemy wpis
       const [entry] = await db
         .insert(wellbeingEntries)
         .values(entryData)

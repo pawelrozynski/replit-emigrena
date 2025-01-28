@@ -17,6 +17,15 @@ export default function Dashboard() {
               <span className="text-sm text-muted-foreground">
                 Zalogowano jako {user?.email}
               </span>
+              {user?.isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.href = '/admin'}
+                >
+                  Panel Admina
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"

@@ -80,7 +80,7 @@ export const handler: Handler = async (event, context) => {
       headers,
       body: JSON.stringify({ 
         error: "Internal server error",
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
       })
     };
   }

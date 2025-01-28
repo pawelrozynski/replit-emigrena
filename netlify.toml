@@ -5,16 +5,19 @@ functions = "netlify/functions"
 
 [functions]
 node_bundler = "esbuild"
+included_files = ["netlify/functions/**/*.js"]
 external_node_modules = [
   "@neondatabase/serverless",
   "drizzle-orm",
-  "ws"
+  "ws",
+  "@netlify/functions",
+  "node-fetch",
+  "date-fns"
 ]
-included_files = ["db/**/*.ts"]
 
 [[redirects]]
 from = "/api/*"
-to = "/.netlify/functions/api/:splat"
+to = "/.netlify/functions/test"
 status = 200
 force = true
 
@@ -27,3 +30,12 @@ force = true
 [build.environment]
 NODE_VERSION = "18.20.6"
 NODE_ENV = "production"
+NETLIFY_DEBUG = "true"
+DEBUG = "*"
+
+[dev]
+framework = "#custom"
+command = "npm run dev"
+targetPort = 5000
+port = 8888
+publish = "dist/public"

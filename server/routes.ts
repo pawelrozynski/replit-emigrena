@@ -31,13 +31,15 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      // Convert date string to Date object and strip time part
+      // Poprawka: zachowujemy oryginalną datę bez modyfikacji strefy czasowej
       const entryDate = new Date(req.body.date);
-      entryDate.setHours(0, 0, 0, 0);
+
+      // Ustawiamy czas na środek dnia, aby uniknąć problemów ze strefami czasowymi
+      entryDate.setUTCHours(12, 0, 0, 0);
 
       // Check if the date is in the future
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      today.setUTCHours(12, 0, 0, 0);
 
       if (entryDate > today) {
         return res.status(400).json({ error: "Nie można dodawać wpisów z przyszłą datą" });
@@ -60,7 +62,6 @@ export function registerRoutes(app: Express): Server {
         ...req.body,
         userId: req.user.id,
         date: entryDate,
-        // Set interval fields to null if not provided
         totalSleepDuration: req.body.totalSleepDuration || null,
         deepSleepDuration: req.body.deepSleepDuration || null,
       };

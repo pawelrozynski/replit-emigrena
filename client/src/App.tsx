@@ -20,11 +20,12 @@ function Router() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
+  // Jeśli użytkownik nie jest zalogowany, pokazujemy stronę logowania
   if (!user) {
     return <AuthPage />;
   }
@@ -32,13 +33,13 @@ function Router() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      <main className="flex-grow">
+      <main className="flex-grow container mx-auto px-4 py-8">
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/new-entry" component={NewEntry} />
           <Route path="/entries" component={Entries} />
           <Route path="/profile" component={Profile} />
-          <Route path="/admin" component={AdminPage} />
+          {user.isAdmin && <Route path="/admin" component={AdminPage} />}
           <Route component={NotFound} />
         </Switch>
       </main>

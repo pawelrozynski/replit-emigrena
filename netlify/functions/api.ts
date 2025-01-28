@@ -21,7 +21,8 @@ export const handler: Handler = async (event, context) => {
   }
 
   try {
-    const path = event.path.replace('/.netlify/functions/api', '');
+    // Usuwamy prefiks /.netlify/functions/api z ścieżki
+    const path = event.path.replace(/^\/?(\.netlify\/functions\/api)?\//, '/');
     console.log('Processing request:', { path, method: event.httpMethod });
 
     // Pobieranie wpisów
@@ -109,13 +110,13 @@ export const handler: Handler = async (event, context) => {
 
     // Pobieranie treści CMS
     if (path === '/cms' && event.httpMethod === 'GET') {
-      const contents = await db.query.cmsContents.findMany({
+      const versions = await db.query.cmsContents.findMany({
         orderBy: desc(cmsContents.updatedAt),
       });
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify(contents)
+        body: JSON.stringify(versions)
       };
     }
 

@@ -35,49 +35,146 @@ Główne tabele:
 ## 3. Funkcjonalności Systemu
 
 ### 3.1 System Autentykacji
-- Rejestracja nowych użytkowników
-- Logowanie do systemu
-- Weryfikacja adresu email
-- Zarządzanie rolami (użytkownik/administrator)
+#### Rejestracja i logowanie
+- Walidacja adresu email (format standardowy email)
+- Walidacja hasła:
+  - Minimum 8 znaków
+  - Przynajmniej jedna wielka litera
+  - Przynajmniej jedna cyfra
+  - Weryfikacja zgodności hasła i potwierdzenia
+- Automatyczne logowanie po rejestracji
+- Obsługa sesji użytkownika
+- Wylogowanie z systemu
 
 ### 3.2 Monitorowanie Samopoczucia
 #### Parametry snu:
 - Jakość snu (skala 1-100)
-- Całkowity czas snu
-- Czas snu głębokiego
-- Informacje o snach
+  - Walidacja: liczba całkowita w zakresie 1-100
+  - Opis: Subiektywna ocena jakości snu
+- Całkowity czas snu (w godzinach)
+  - Walidacja: liczba dziesiętna 0-24
+  - Opis: Łączny czas snu w ciągu doby
+- Czas snu głębokiego (w godzinach)
+  - Walidacja: liczba dziesiętna, nie większa niż całkowity czas snu
+  - Opis: Szacowany czas fazy głębokiego snu
+- Spanie przy otwartym oknie (tak/nie)
+- Sny (trzy kategorie):
+  - Przyjemne sny (tak/nie)
+  - Koszmary (tak/nie)
+  - Wybudzenie do toalety (tak/nie)
 - Godzina snu i pobudki
-- Sztywność karku
-- Czas potrzebny na wstanie
+  - Format: HH:MM
+  - Walidacja: poprawny format czasu
+- Sztywność karku (skala 1-10)
+- Czas potrzebny na wstanie (minuty)
+  - Walidacja: liczba całkowita 0-120
 
 #### Parametry samopoczucia:
-- Motywacja do pracy
-- Nastrój
-- Satysfakcja z kontaktów społecznych
-- Chęć do aktywności fizycznej
-- Ból głowy
-- Senność
-- Zmęczenie fizyczne
+- Motywacja do pracy (skala 1-10)
+- Nastrój (skala 1-10)
+- Satysfakcja z kontaktów społecznych (skala 1-10)
+- Chęć do aktywności fizycznej (skala 1-10)
+- Ból głowy (skala 1-10)
+  - 1: brak bólu
+  - 10: najsilniejszy ból
+- Senność (skala 1-10)
+- Zmęczenie fizyczne (skala 1-10)
 
 #### Aktywność i dieta:
 - Liczba kroków
+  - Walidacja: liczba całkowita ≥ 0
 - Liczba pełnych posiłków
+  - Walidacja: liczba całkowita 0-10
 - Porcje owoców i warzyw
-- Spożycie alkoholu
+  - Walidacja: liczba całkowita 0-20
+- Spożycie alkoholu (ml)
+  - Walidacja: liczba całkowita ≥ 0
 - Porcje słodyczy
+  - Walidacja: liczba całkowita 0-20
 - Porcje słodkich napojów
+  - Walidacja: liczba całkowita 0-20
 
-### 3.3 Panel Administratora
-#### Zarządzanie treścią (CMS):
-- Dodawanie nowych treści
-- Edycja istniejących treści
-- Zarządzanie kluczami treści
-- Historia zmian
+### 3.3 System CMS
+#### Zasady zarządzania treścią:
+1. Dostęp:
+   - Wyłącznie dla użytkowników z uprawnieniami administratora
+   - Weryfikacja uprawnień przy każdej operacji
 
-#### System dokumentacji:
-- Wersjonowanie dokumentacji
-- Eksport dokumentacji do PDF
-- Przegląd historii zmian
+2. Struktura treści:
+   - Klucz (unikalny identyfikator treści)
+   - Zawartość (tekst w formacie plain text)
+   - Data utworzenia
+   - Data ostatniej modyfikacji
+
+3. Operacje na treściach:
+   - Dodawanie nowych treści
+     - Walidacja unikalności klucza
+     - Automatyczne timestampy
+   - Edycja istniejących treści
+     - Zachowanie historii zmian
+     - Możliwość zmiany klucza (z walidacją unikalności)
+   - Przeglądanie treści
+     - Sortowanie po dacie modyfikacji
+     - Filtrowanie po kluczach
+
+4. Dostępne sekcje CMS:
+   - Teksty powitalne (dashboard_welcome_text)
+   - Instrukcje logowania (login_instructions)
+   - Instrukcje rejestracji (registration_instructions)
+   - Etykiety formularzy (field_label_*)
+   - Opisy sekcji (section_description_*)
+
+### 3.4 Profil Użytkownika
+#### Informacje podstawowe:
+- Adres email (unikalny)
+- Status konta (aktywne/nieaktywne)
+- Data rejestracji
+- Ostatnie logowanie
+
+#### Uprawnienia:
+- Użytkownik standardowy
+  - Dostęp do formularzy
+  - Przeglądanie własnych wpisów
+  - Edycja profilu
+- Administrator
+  - Wszystkie uprawnienia użytkownika standardowego
+  - Dostęp do panelu administratora
+  - Zarządzanie treściami CMS
+  - Zarządzanie dokumentacją
+
+### 3.5 Walidacje systemowe
+#### Walidacje formularza wpisów:
+1. Data wpisu:
+   - Nie może być z przyszłości
+   - Maksymalnie jeden wpis na dzień
+   - Format: YYYY-MM-DD
+
+2. Pola numeryczne:
+   - Wartości w zdefiniowanych zakresach
+   - Możliwość pozostawienia pustych pól (null)
+   - Automatyczna konwersja typów
+
+3. Pola czasowe:
+   - Format HH:MM
+   - Walidacja poprawności formatu
+   - Opcjonalność pól
+
+4. Pola logiczne (boolean):
+   - Wartości: true/false/null
+   - Interfejs przełącznika z trzema stanami
+
+#### Walidacje autentykacji:
+1. Email:
+   - Format standardowy (xxx@xxx.xxx)
+   - Unikalność w systemie
+   - Wielkość liter nie ma znaczenia
+
+2. Hasło:
+   - Minimum 8 znaków
+   - Przynajmniej jedna wielka litera
+   - Przynajmniej jedna cyfra
+   - Weryfikacja zgodności z potwierdzeniem
+   - Bezpieczne hashowanie w bazie danych
 
 ## 4. Interfejs Użytkownika
 

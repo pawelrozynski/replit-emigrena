@@ -17,7 +17,6 @@ import type { DocumentationVersion } from "@db/schema";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 export function DocumentationEditor() {
   const { toast } = useToast();
@@ -71,94 +70,89 @@ export function DocumentationEditor() {
 
   const exportToPDF = async (version: DocumentationVersion) => {
     try {
-      const content = document.createElement('div');
-      content.innerHTML = `
-        <div style="
-          padding: 40px;
-          font-family: Arial, sans-serif;
-          font-size: 12px;
-          line-height: 1.5;
-          max-width: 800px;
-          margin: 0 auto;
-        ">
-          <h1 style="
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-          ">Dokumentacja eMigrena</h1>
-          <p style="
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 30px;
-            text-align: center;
-          ">Wersja z dnia: ${format(new Date(version.versionDate), "PP", { locale: pl })}</p>
-          <div style="
-            white-space: pre-wrap;
-            text-align: justify;
-          ">${version.content.replace(/\n\n/g, '<div style="height: 20px;"></div>')}</div>
-        </div>
-      `;
-      document.body.appendChild(content);
+      const pdf = new jsPDF();
+      const lineHeight = 7;
+      const fontSize = 12;
+      const marginLeft = 20;
+      const marginTop = 20;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const maxLineWidth = pageWidth - 2 * marginLeft;
 
-      const canvas = await html2canvas(content, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: 1200,
-        width: 800,
-      });
+      // Funkcja pomocnicza do dodawania tekstu z automatycznym podziałem na linie
+      const addWrappedText = (text: string, x: number, y: number, maxWidth: number) => {
+        const words = text.split(' ');
+        let line = '';
+        let currentY = y;
 
-      document.body.removeChild(content);
+        for (let i = 0; i < words.length; i++) {
+          const testLine = line + (line ? ' ' : '') + words[i];
+          const testWidth = pdf.getStringUnitWidth(testLine) * fontSize / pdf.internal.scaleFactor;
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
+          if (testWidth > maxWidth) {
+            pdf.text(line, x, currentY);
+            line = words[i];
+            currentY += lineHeight;
 
-      // Oblicz ile stron potrzebujemy
-      const pageHeight = pdfHeight - 20; // Margines 10mm na górze i dole
-      const imgAspectRatio = imgHeight / imgWidth;
-      const pageWidth = pdfWidth - 20; // Margines 10mm po bokach
-      const imgFitWidth = pageWidth;
-      const imgFitHeight = imgFitWidth * imgAspectRatio;
-      const pages = Math.ceil(imgFitHeight / pageHeight);
+            // Dodaj nową stronę, jeśli tekst przekracza wysokość strony
+            if (currentY >= pdf.internal.pageSize.getHeight() - marginTop) {
+              pdf.addPage();
+              currentY = marginTop + lineHeight;
+            }
+          } else {
+            line = testLine;
+          }
+        }
 
-      // Podziel obraz na strony
-      for (let page = 0; page < pages; page++) {
-        if (page > 0) {
+        if (line) {
+          pdf.text(line, x, currentY);
+          currentY += lineHeight;
+        }
+
+        return currentY;
+      };
+
+      // Ustaw czcionkę i rozmiar
+      pdf.setFont("helvetica");
+      pdf.setFontSize(fontSize);
+
+      // Tytuł
+      pdf.setFontSize(24);
+      pdf.setFont("helvetica", "bold");
+      const title = "Dokumentacja eMigrena";
+      const titleWidth = pdf.getStringUnitWidth(title) * 24 / pdf.internal.scaleFactor;
+      const titleX = (pageWidth - titleWidth) / 2;
+      pdf.text(title, titleX, marginTop);
+
+      // Data wersji
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "normal");
+      const dateText = `Wersja z dnia: ${format(new Date(version.versionDate), "PP", { locale: pl })}`;
+      const dateWidth = pdf.getStringUnitWidth(dateText) * 14 / pdf.internal.scaleFactor;
+      const dateX = (pageWidth - dateWidth) / 2;
+      pdf.text(dateText, dateX, marginTop + 10);
+
+      // Treść dokumentacji
+      pdf.setFontSize(fontSize);
+      let currentY = marginTop + 20;
+
+      // Podziel tekst na sekcje (według nagłówków)
+      const sections = version.content.split(/^#+ /m);
+
+      for (const section of sections) {
+        if (!section.trim()) continue;
+
+        // Sprawdź, czy potrzebna jest nowa strona
+        if (currentY >= pdf.internal.pageSize.getHeight() - marginTop) {
           pdf.addPage();
+          currentY = marginTop;
         }
 
-        const sourceY = page * (canvas.height / pages);
-        const sourceHeight = canvas.height / pages;
-
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = sourceHeight;
-        const ctx = tempCanvas.getContext('2d');
-
-        if (ctx) {
-          ctx.drawImage(
-            canvas,
-            0, sourceY, canvas.width, sourceHeight,
-            0, 0, canvas.width, sourceHeight
-          );
-
-          const pageImgData = tempCanvas.toDataURL('image/png');
-          pdf.addImage(
-            pageImgData,
-            'PNG',
-            10, // margines lewy
-            10, // margines górny
-            pageWidth,
-            Math.min(pageHeight, imgFitHeight - (page * pageHeight))
-          );
-        }
+        // Dodaj sekcję z zawijaniem tekstu
+        currentY = addWrappedText(section.trim(), marginLeft, currentY, maxLineWidth);
+        currentY += lineHeight; // Dodatkowy odstęp między sekcjami
       }
 
+      // Zapisz PDF
       pdf.save(`dokumentacja-emigrena-${format(new Date(version.versionDate), "yyyy-MM-dd")}.pdf`);
 
       toast({

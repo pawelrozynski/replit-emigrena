@@ -1,0 +1,39 @@
+# Dokumentacja projektu eMigrena - Historia rozwoju
+
+## Wprowadzenie
+Ten dokument zawiera przegląd historii rozwoju aplikacji eMigrena, oparty na konwersacjach i iteracjach rozwojowych.
+
+## Główne funkcjonalności zaimplementowane w projekcie
+
+### System zarządzania treścią (CMS)
+- Implementacja edytora CMS w panelu administratora
+- Możliwość dodawania i edycji dynamicznych treści
+- Wyświetlanie treści CMS na stronie głównej
+
+### System dokumentacji
+- Wersjonowanie dokumentacji w panelu administratora
+- Możliwość eksportu dokumentacji do formatu PDF
+- Przechowywanie historii zmian dokumentacji
+
+### Funkcje administracyjne
+- Panel administratora z zakładkami do zarządzania treścią i dokumentacją
+- System uprawnień rozróżniający administratorów od zwykłych użytkowników
+- Interfejs do zarządzania treściami statycznymi
+
+### Interfejs użytkownika
+- Responsywny design dostosowany do różnych urządzeń
+- Przejrzysty układ strony głównej z dynamiczną treścią
+- Intuicyjna nawigacja między sekcjami aplikacji
+
+## Technologie
+- Frontend: React z TypeScript
+- Backend: Node.js z Express
+- Baza danych: PostgreSQL z ORM Drizzle
+- Dodatkowe biblioteki: shadcn/ui, jsPDF, html2canvas
+
+## Wnioski i rekomendacje
+1. Utrzymanie spójności językowej (polski) w interfejsie użytkownika
+2. Regularne aktualizacje dokumentacji
+3. Dalszy rozwój funkcjonalności CMS według potrzeb użytkowników
+
+Ten dokument będzie aktualizowany wraz z rozwojem projektu.

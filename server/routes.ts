@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
 import { wellbeingEntries, cmsContents, documentationVersions } from "@db/schema";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, count } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -31,26 +31,21 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      // Parsujemy datę z requestu, która powinna być w formacie UTC
       const inputDate = new Date(req.body.date);
-
-      // Tworzymy nową datę w UTC, zachowując dokładnie ten sam dzień
       const entryDate = new Date(Date.UTC(
         inputDate.getUTCFullYear(),
         inputDate.getUTCMonth(),
         inputDate.getUTCDate(),
-        12, // ustawiamy na południe UTC aby uniknąć problemów ze strefami czasowymi
+        12, 
         0,
         0,
         0
       ));
 
-      // Debug logowanie
       console.log('Otrzymana data z formularza:', req.body.date);
       console.log('Data po konwersji:', entryDate.toISOString());
       console.log('Lokalny czas utworzonej daty:', entryDate.toString());
 
-      // Sprawdzamy czy data nie jest z przyszłości
       const today = new Date();
       const todayUtc = new Date(Date.UTC(
         today.getUTCFullYear(),
@@ -66,7 +61,6 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Nie można dodawać wpisów z przyszłą datą" });
       }
 
-      // Sprawdzamy czy wpis na ten dzień już istnieje
       const existingEntry = await db.query.wellbeingEntries.findFirst({
         where: and(
           eq(wellbeingEntries.userId, req.user.id),
@@ -78,7 +72,6 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Wpis na ten dzień już istnieje" });
       }
 
-      // Zapisujemy wpis
       const [entry] = await db
         .insert(wellbeingEntries)
         .values({
@@ -97,7 +90,24 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // CMS routes
+  app.get("/api/entries/count", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Nie zalogowano");
+    }
+
+    try {
+      const [result] = await db
+        .select({ count: count() })
+        .from(wellbeingEntries)
+        .where(eq(wellbeingEntries.userId, req.user.id));
+
+      res.json(result.count);
+    } catch (error) {
+      console.error("Error counting entries:", error);
+      res.status(500).json({ error: "Błąd podczas liczenia wpisów" });
+    }
+  });
+
   app.get("/api/cms", async (req, res) => {
     try {
       const contents = await db.query.cmsContents.findMany({
@@ -142,7 +152,6 @@ export function registerRoutes(app: Express): Server {
       };
 
       if (req.body.key) {
-        // Sprawdź czy nowy klucz nie koliduje z istniejącymi
         if (req.body.key !== req.body.oldKey) {
           const [existingContent] = await db
             .select()
@@ -177,7 +186,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Documentation routes
   app.get("/api/documentation", async (req, res) => {
     try {
       const versions = await db.query.documentationVersions.findMany({

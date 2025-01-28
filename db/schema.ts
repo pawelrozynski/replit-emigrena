@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   isEmailVerified: boolean("is_email_verified").default(false).notNull(),
   verificationToken: text("verification_token"),
   verificationTokenExpiry: timestamp("verification_token_expiry", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const wellbeingEntries = pgTable("wellbeing_entries", {

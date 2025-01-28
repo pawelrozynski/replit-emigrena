@@ -27,11 +27,6 @@ export function Navbar() {
                   Historia wpisów
                 </a>
               </Link>
-              <Link href="/profile">
-                <a className="text-sm text-muted-foreground hover:text-foreground">
-                  Profil użytkownika
-                </a>
-              </Link>
               {user?.email === 'prozynski@kanga.exchange' && (
                 <Link href="/admin">
                   <a className="text-sm text-muted-foreground hover:text-foreground">
@@ -39,6 +34,11 @@ export function Navbar() {
                   </a>
                 </Link>
               )}
+              <Link href="/profile">
+                <a className="text-sm text-muted-foreground hover:text-foreground">
+                  Profil użytkownika
+                </a>
+              </Link>
             </nav>
           </div>
           <div className="flex items-center space-x-4">

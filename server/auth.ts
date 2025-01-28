@@ -101,10 +101,9 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "Nieprawidłowe hasło." });
           }
 
-          // Tymczasowo wyłączamy sprawdzanie weryfikacji email
-          // if (!user.isEmailVerified) {
-          //   return done(null, false, { message: "Adres email nie został zweryfikowany. Sprawdź swoją skrzynkę pocztową." });
-          // }
+          if (!user.isEmailVerified) {
+            return done(null, false, { message: "Adres email nie został zweryfikowany. Sprawdź swoją skrzynkę pocztową." });
+          }
 
           return done(null, user);
         } catch (err) {
@@ -150,27 +149,30 @@ export function setupAuth(app: Express) {
       }
 
       const hashedPassword = await crypto.hash(password);
+      const verificationToken = emailService.generateVerificationToken();
+      const verificationTokenExpiry = new Date();
+      verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24);
 
-      // Tymczasowo ustawiamy konto jako zweryfikowane bez tokenu
       const [newUser] = await db
         .insert(users)
         .values({ 
           email, 
           password: hashedPassword,
-          isEmailVerified: true, // Auto-verify for now
+          verificationToken,
+          verificationTokenExpiry,
+          isEmailVerified: false,
           isAdmin: false 
         })
         .returning();
 
-      // Weryfikacja email zostanie dodana później
-      // try {
-      //   await emailService.sendVerificationEmail(email, verificationToken);
-      // } catch (error) {
-      //   console.error('Failed to send verification email:', error);
-      // }
+      try {
+        await emailService.sendVerificationEmail(email, verificationToken);
+      } catch (error) {
+        console.error('Failed to send verification email:', error);
+      }
 
       res.json({ 
-        message: "Rejestracja pomyślna. Możesz się teraz zalogować." 
+        message: "Rejestracja pomyślna. Sprawdź swoją skrzynkę pocztową, aby zweryfikować adres email." 
       });
     } catch (error) {
       next(error);
@@ -202,6 +204,7 @@ export function setupAuth(app: Express) {
     }
     res.json(req.user);
   });
+
   app.get("/verify-email", async (req, res) => {
     const { token } = req.query;
 

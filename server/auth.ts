@@ -11,31 +11,47 @@ import { eq } from "drizzle-orm";
 import { emailService } from "./services/email";
 
 const scryptAsync = promisify(scrypt);
+
 const crypto = {
   hash: async (password: string) => {
+    // Use PostgreSQL's crypt function directly in SQL when inserting
     const salt = randomBytes(16).toString("hex");
     const buf = (await scryptAsync(password, salt, 64)) as Buffer;
     return `${buf.toString("hex")}.${salt}`;
   },
   compare: async (suppliedPassword: string, storedPassword: string) => {
     try {
+      // Split stored password into hash and salt
       const [hashedPassword, salt] = storedPassword.split(".");
-      if (!hashedPassword || !salt) {
+
+      // Validate input format
+      if (!hashedPassword || !salt || typeof hashedPassword !== 'string' || typeof salt !== 'string') {
         console.error('Invalid stored password format');
         return false;
       }
+
+      // Convert stored hash to buffer
       const hashedPasswordBuf = Buffer.from(hashedPassword, "hex");
-      const suppliedPasswordBuf = (await scryptAsync(
-        suppliedPassword,
-        salt,
-        64
-      )) as Buffer;
+
+      // Hash supplied password with same salt
+      const suppliedPasswordBuf = await scryptAsync(suppliedPassword, salt, 64) as Buffer;
+
+      // Ensure both buffers have the same length before comparison
+      if (hashedPasswordBuf.length !== suppliedPasswordBuf.length) {
+        console.error('Hash length mismatch:', {
+          stored: hashedPasswordBuf.length,
+          supplied: suppliedPasswordBuf.length
+        });
+        return false;
+      }
+
+      // Compare hashes
       return timingSafeEqual(hashedPasswordBuf, suppliedPasswordBuf);
     } catch (error) {
       console.error('Error comparing passwords:', error);
       return false;
     }
-  },
+  }
 };
 
 declare global {
@@ -81,6 +97,8 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
+          console.log('Attempting login for email:', email);
+
           const [user] = await db
             .select()
             .from(users)
@@ -88,9 +106,13 @@ export function setupAuth(app: Express) {
             .limit(1);
 
           if (!user) {
+            console.log('User not found');
             return done(null, false, { message: "Nie znaleziono użytkownika." });
           }
+
           const isMatch = await crypto.compare(password, user.password);
+          console.log('Password comparison result:', isMatch);
+
           if (!isMatch) {
             return done(null, false, { message: "Nieprawidłowe hasło." });
           }
@@ -101,6 +123,7 @@ export function setupAuth(app: Express) {
 
           return done(null, user);
         } catch (err) {
+          console.error('Authentication error:', err);
           return done(err);
         }
       }
@@ -170,44 +193,6 @@ export function setupAuth(app: Express) {
       });
     } catch (error) {
       next(error);
-    }
-  });
-
-  app.get("/api/verify-email", async (req, res) => {
-    const { token } = req.query;
-
-    if (!token || typeof token !== 'string') {
-      return res.status(400).send("Nieprawidłowy token weryfikacyjny");
-    }
-
-    try {
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.verificationToken, token))
-        .limit(1);
-
-      if (!user) {
-        return res.status(400).send("Nieprawidłowy token weryfikacyjny");
-      }
-
-      if (user.verificationTokenExpiry && new Date(user.verificationTokenExpiry) < new Date()) {
-        return res.status(400).send("Token weryfikacyjny wygasł");
-      }
-
-      await db
-        .update(users)
-        .set({
-          isEmailVerified: true,
-          verificationToken: null,
-          verificationTokenExpiry: null
-        })
-        .where(eq(users.id, user.id));
-
-      res.redirect('/?verified=true');
-    } catch (error) {
-      console.error('Email verification error:', error);
-      res.status(500).send("Wystąpił błąd podczas weryfikacji adresu email");
     }
   });
 

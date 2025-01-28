@@ -4,22 +4,28 @@ import { Loader2 } from "lucide-react";
 
 export default function Home() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['hello'],
+    queryKey: ['api/hello'],
     queryFn: async () => {
-      console.log('Calling API endpoint:', getApiUrl('hello'));
-      const response = await fetch(getApiUrl('hello'));
+      const url = getApiUrl('hello');
+      console.log('Calling API endpoint:', url);
+
+      const response = await fetch(url);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      const text = await response.text();
+      console.log('Raw response:', text);
 
       if (!response.ok) {
-        const text = await response.text();
-        console.error('API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: text
-        });
-        throw new Error(`HTTP error! status: ${response.status}\n${text}`);
+        throw new Error(`HTTP error! status: ${response.status}\nResponse: ${text}`);
       }
 
-      return response.json();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        console.error('JSON parse error:', e);
+        throw new Error(`Failed to parse JSON response: ${text}`);
+      }
     }
   });
 
@@ -35,9 +41,9 @@ export default function Home() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <h1 className="text-xl font-semibold text-red-500 mb-2">Błąd połączenia</h1>
-        <p className="text-gray-600">{(error as Error).message}</p>
-        <pre className="mt-4 p-4 bg-gray-100 rounded-lg text-sm overflow-auto max-w-full">
-          {JSON.stringify(error, null, 2)}
+        <p className="text-gray-600 mb-4">{(error as Error).message}</p>
+        <pre className="p-4 bg-gray-100 rounded-lg text-sm overflow-auto max-w-full">
+          {error instanceof Error ? error.stack : JSON.stringify(error, null, 2)}
         </pre>
       </div>
     );
@@ -45,7 +51,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <h1 className="text-2xl font-bold mb-4">Test Netlify Functions</h1>
+      <h1 className="text-2xl font-bold mb-4">Test API</h1>
       <pre className="bg-gray-100 p-4 rounded-lg">
         {JSON.stringify(data, null, 2)}
       </pre>

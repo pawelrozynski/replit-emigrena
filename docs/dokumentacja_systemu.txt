@@ -1,0 +1,165 @@
+# Dokumentacja Systemu eMigrena
+Wersja 1.0 (28 stycznia 2025)
+
+## 1. Wprowadzenie
+
+### 1.1 Cel systemu
+eMigrena to zaawansowana platforma do monitorowania zdrowia, ze szczególnym uwzględnieniem śledzenia migreny i innych dolegliwości zdrowotnych. System umożliwia użytkownikom szczegółowe dokumentowanie swojego stanu zdrowia oraz analizę czynników wpływających na samopoczucie.
+
+### 1.2 Grupa docelowa
+- Osoby cierpiące na migrenę
+- Pacjenci z przewlekłymi dolegliwościami zdrowotnymi
+- Osoby zainteresowane monitorowaniem swojego samopoczucia
+- Lekarze i specjaliści medyczni (dostęp do danych pacjentów)
+
+## 2. Architektura Systemu
+
+### 2.1 Stos technologiczny
+- Frontend: React + TypeScript
+- Backend: Node.js + Express
+- Baza danych: PostgreSQL z ORM Drizzle
+- Dodatkowe biblioteki:
+  - shadcn/ui (komponenty interfejsu)
+  - jsPDF (generowanie dokumentów PDF)
+  - html2canvas (konwersja widoku do PDF)
+  - date-fns (formatowanie dat)
+  - zod (walidacja danych)
+
+### 2.2 Struktura bazy danych
+Główne tabele:
+- users (użytkownicy systemu)
+- wellbeing_entries (wpisy dotyczące samopoczucia)
+- cms_contents (treści zarządzane przez CMS)
+- documentation_versions (wersje dokumentacji)
+
+## 3. Funkcjonalności Systemu
+
+### 3.1 System Autentykacji
+- Rejestracja nowych użytkowników
+- Logowanie do systemu
+- Weryfikacja adresu email
+- Zarządzanie rolami (użytkownik/administrator)
+
+### 3.2 Monitorowanie Samopoczucia
+#### Parametry snu:
+- Jakość snu (skala 1-100)
+- Całkowity czas snu
+- Czas snu głębokiego
+- Informacje o snach
+- Godzina snu i pobudki
+- Sztywność karku
+- Czas potrzebny na wstanie
+
+#### Parametry samopoczucia:
+- Motywacja do pracy
+- Nastrój
+- Satysfakcja z kontaktów społecznych
+- Chęć do aktywności fizycznej
+- Ból głowy
+- Senność
+- Zmęczenie fizyczne
+
+#### Aktywność i dieta:
+- Liczba kroków
+- Liczba pełnych posiłków
+- Porcje owoców i warzyw
+- Spożycie alkoholu
+- Porcje słodyczy
+- Porcje słodkich napojów
+
+### 3.3 Panel Administratora
+#### Zarządzanie treścią (CMS):
+- Dodawanie nowych treści
+- Edycja istniejących treści
+- Zarządzanie kluczami treści
+- Historia zmian
+
+#### System dokumentacji:
+- Wersjonowanie dokumentacji
+- Eksport dokumentacji do PDF
+- Przegląd historii zmian
+
+## 4. Interfejs Użytkownika
+
+### 4.1 Główne komponenty
+- Navbar (nawigacja główna)
+- Sidebar (menu boczne)
+- Formularze wprowadzania danych
+- Widoki prezentacji danych
+- Panel administratora
+
+### 4.2 Responsywność
+- Dostosowanie do urządzeń mobilnych
+- Breakpointy dla różnych rozmiarów ekranu
+- Optymalizacja komponentów dla urządzeń dotykowych
+
+## 5. Bezpieczeństwo
+
+### 5.1 Autoryzacja
+- Szyfrowanie haseł
+- Sesje użytkowników
+- Zabezpieczenie endpoints API
+- Walidacja danych wejściowych
+
+### 5.2 Ochrona danych
+- Szyfrowanie danych wrażliwych
+- Separacja danych użytkowników
+- Kontrola dostępu do API
+
+## 6. Instrukcje Użytkowania
+
+### 6.1 Dla użytkowników
+1. Rejestracja i logowanie
+   - Utworzenie konta przez formularz rejestracji
+   - Weryfikacja adresu email
+   - Logowanie przy użyciu poświadczeń
+
+2. Wprowadzanie danych
+   - Wypełnianie formularza samopoczucia
+   - Zapisywanie wpisów
+   - Przeglądanie historii
+
+### 6.2 Dla administratorów
+1. Zarządzanie treścią
+   - Dostęp do panelu CMS
+   - Edycja treści dynamicznych
+   - Zarządzanie dokumentacją
+
+2. Monitorowanie systemu
+   - Przegląd aktywności użytkowników
+   - Zarządzanie uprawnieniami
+   - Aktualizacja dokumentacji
+
+## 7. Rozwój i Utrzymanie
+
+### 7.1 Wersjonowanie
+- Kontrola wersji kodu (git)
+- Wersjonowanie dokumentacji
+- Śledzenie zmian w CMS
+
+### 7.2 Backup i odzyskiwanie
+- Regularne kopie zapasowe bazy danych
+- Procedury odzyskiwania danych
+- Monitoring systemu
+
+## 8. Wnioski i Rekomendacje
+
+### 8.1 Obecny stan projektu
+System znajduje się w fazie produkcyjnej, oferując podstawowe funkcjonalności monitorowania zdrowia oraz zarządzania treścią.
+
+### 8.2 Planowany rozwój
+- Rozbudowa modułu analitycznego
+- Dodanie powiadomień email
+- Integracja z urządzeniami monitorującymi sen
+- Rozszerzenie możliwości eksportu danych
+
+### 8.3 Zalecenia
+1. Regularne aktualizacje dokumentacji
+2. Monitorowanie wydajności systemu
+3. Zbieranie feedbacku od użytkowników
+4. Planowanie rozwoju funkcjonalności w oparciu o potrzeby użytkowników
+
+## 9. Wsparcie techniczne
+W przypadku problemów technicznych lub pytań, prosimy o kontakt z zespołem wsparcia technicznego:
+- Email: support@emigrena.pl
+- System zgłoszeń: help.emigrena.pl

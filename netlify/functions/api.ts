@@ -5,7 +5,7 @@ import { desc } from "drizzle-orm";
 
 export const handler: Handler = async (event, context) => {
   // Debug logging
-  console.log('Request received:', {
+  console.log('Request details:', {
     path: event.path,
     httpMethod: event.httpMethod,
     headers: event.headers,
@@ -14,26 +14,52 @@ export const handler: Handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
     'Content-Type': 'application/json'
   };
 
+  // Handle OPTIONS requests for CORS
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers,
+      body: ''
+    };
+  }
+
   try {
-    // Extract path without the /api prefix
-    const path = event.path.replace(/^\/\.netlify\/functions\/api/, '') || '/';
-    console.log('Processing path:', path);
+    // Test database connection
+    try {
+      const testQuery = await db.query.cmsContents.findMany({
+        limit: 1
+      });
+      console.log('Database connection test:', testQuery);
+    } catch (dbTestError) {
+      console.error('Database connection test failed:', dbTestError);
+    }
+
+    // Simplified path handling
+    const path = event.path.split('/').pop() || '';
+    console.log('Processing request for path:', path);
 
     // GET /cms - Pobieranie treści CMS
-    if (path === '/cms' && event.httpMethod === 'GET') {
+    if (path === 'cms' && event.httpMethod === 'GET') {
       console.log('Fetching CMS contents...');
-      const contents = await db.query.cmsContents.findMany({
-        orderBy: desc(cmsContents.updatedAt),
-      });
-      console.log('Found CMS contents:', contents);
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify(contents)
-      };
+      try {
+        const contents = await db.query.cmsContents.findMany({
+          orderBy: desc(cmsContents.updatedAt),
+        });
+        console.log('Found CMS contents:', contents);
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify(contents)
+        };
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        throw dbError;
+      }
     }
 
     // Handle 404 for unmatched routes
@@ -42,7 +68,8 @@ export const handler: Handler = async (event, context) => {
       headers,
       body: JSON.stringify({ 
         error: "Not found",
-        path: path 
+        path: path,
+        fullPath: event.path,
       })
     };
 

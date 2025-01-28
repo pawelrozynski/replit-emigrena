@@ -31,25 +31,31 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      // Tworzymy datę bez modyfikowania strefy czasowej
-      const dateParts = req.body.date.split('T')[0].split('-');
-      const entryDate = new Date(Date.UTC(
-        parseInt(dateParts[0]), // rok
-        parseInt(dateParts[1]) - 1, // miesiąc (0-11)
-        parseInt(dateParts[2]), // dzień
-        12, // ustawiamy na południe UTC
-        0,
-        0
-      ));
+      // Wyświetlamy szczegółowe informacje o otrzymanej dacie
+      console.log('Otrzymana data z formularza:', req.body.date);
 
-      console.log('Otrzymana data:', req.body.date);
-      console.log('Przetworzona data UTC:', entryDate.toISOString());
+      // Tworzymy datę zachowując wybrany dzień
+      const date = new Date(req.body.date);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+
+      // Tworzymy nową datę ustawiając czas na 12:00 UTC
+      const entryDate = new Date(Date.UTC(year, month, day, 12, 0, 0));
+
+      console.log('Data po konwersji:', entryDate.toISOString());
+      console.log('Lokalny czas utworzonej daty:', entryDate.toString());
 
       // Sprawdzamy czy data nie jest z przyszłości
       const today = new Date();
-      today.setUTCHours(12, 0, 0, 0);
+      const todayUtc = new Date(Date.UTC(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        12, 0, 0
+      ));
 
-      if (entryDate > today) {
+      if (entryDate > todayUtc) {
         return res.status(400).json({ error: "Nie można dodawać wpisów z przyszłą datą" });
       }
 
@@ -65,19 +71,16 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Wpis na ten dzień już istnieje" });
       }
 
-      // Przygotowujemy dane wpisu
-      const entryData = {
-        ...req.body,
-        userId: req.user.id,
-        date: entryDate,
-        totalSleepDuration: req.body.totalSleepDuration || null,
-        deepSleepDuration: req.body.deepSleepDuration || null,
-      };
-
       // Zapisujemy wpis
       const [entry] = await db
         .insert(wellbeingEntries)
-        .values(entryData)
+        .values({
+          ...req.body,
+          userId: req.user.id,
+          date: entryDate,
+          totalSleepDuration: req.body.totalSleepDuration || null,
+          deepSleepDuration: req.body.deepSleepDuration || null,
+        })
         .returning();
 
       res.json(entry);

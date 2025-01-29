@@ -13,9 +13,9 @@ export const emailService = {
   },
 
   sendVerificationEmail: async (to: string, token: string) => {
-    // Używamy REPL_ID do wygenerowania poprawnego URL
+    // Generujemy poprawny URL na podstawie REPL_SLUG i REPL_OWNER
     const baseUrl = process.env.NODE_ENV === 'production'
-      ? `https://${process.env.REPL_ID}.id.repl.co`
+      ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
       : 'http://localhost:5000';
 
     const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
@@ -39,7 +39,7 @@ export const emailService = {
     try {
       await sgMail.send(msg);
       console.log('Verification email sent successfully');
-      console.log('Verification URL:', verificationUrl); // Dodane logowanie URL
+      console.log('Generated verification URL:', verificationUrl);
     } catch (error: any) {
       console.error('Error sending verification email:', error);
       if (error.response) {

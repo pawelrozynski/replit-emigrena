@@ -5,7 +5,6 @@ if (!process.env.SENDGRID_API_KEY) {
   throw new Error('SENDGRID_API_KEY is required for email functionality');
 }
 
-// Ustawiamy API key dokładnie jak w dokumentacji SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 export const emailService = {
@@ -14,11 +13,14 @@ export const emailService = {
   },
 
   sendVerificationEmail: async (to: string, token: string) => {
-    const verificationUrl = `${process.env.APP_URL || 'http://localhost:5000'}/verify-email?token=${token}`;
+    // Używamy nagłówka Host z żądania, aby uzyskać właściwy adres
+    const verificationUrl = `${process.env.NODE_ENV === 'production' 
+      ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` 
+      : 'http://localhost:5000'}/verify-email?token=${token}`;
 
     const msg = {
       to,
-      from: 'pawel@rozynscy.com', // Zweryfikowany adres nadawcy
+      from: 'pawel@rozynscy.com',
       subject: 'Zweryfikuj swój adres email - eMigrena',
       text: `Witaj w eMigrena!\n\nDziękujemy za rejestrację. Aby aktywować swoje konto, kliknij w poniższy link:\n${verificationUrl}\n\nPozdrawiamy,\nZespół eMigrena`,
       html: `

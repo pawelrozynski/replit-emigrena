@@ -19,8 +19,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(sessionMiddleware);
 
-// Apply rate limiting to all routes
-app.use(limiter);
+// Apply rate limiting based on path
+app.use('/api', limiter.api);
+app.use('/', limiter.general);
 
 // Health check endpoint
 app.get('/health', healthCheck);

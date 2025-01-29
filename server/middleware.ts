@@ -4,17 +4,12 @@ import MemoryStore from "memorystore";
 
 const MemoryStoreSession = MemoryStore(session);
 
-// Stricter rate limiting for production
-const productionConfig = {
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 50 : 100, // Stricter limit in production
-};
-
-export const limiter = rateLimit({
-  ...productionConfig,
+// Bardziej restrykcyjne limity dla API
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minut
+  max: process.env.NODE_ENV === 'production' ? 30 : 100, // Bardziej restrykcyjny limit w produkcji
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: true,
   handler: (req, res) => {
     res.status(429).json({
       status: 'error',
@@ -22,6 +17,19 @@ export const limiter = rateLimit({
     });
   }
 });
+
+// Bardziej liberalny limit dla endpointów statycznych
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 100 : 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+export const limiter = {
+  api: apiLimiter,
+  general: generalLimiter,
+};
 
 export const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "development-secret-key",

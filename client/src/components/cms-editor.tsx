@@ -22,6 +22,7 @@ export function CmsEditor() {
   const [newKey, setNewKey] = useState("");
   const [newContent, setNewContent] = useState("");
   const [editingKey, setEditingKey] = useState<{ id: string, key: string } | null>(null);
+  const [editedContents, setEditedContents] = useState<Record<string, string>>({});
 
   const { data: contents = [], isLoading } = useQuery<CmsContent[]>({
     queryKey: ['/api/cms'],
@@ -82,6 +83,7 @@ export function CmsEditor() {
         variant: "default",
       });
       setEditingKey(null);
+      setEditedContents({});
     },
     onError: (error: Error) => {
       toast({
@@ -95,8 +97,18 @@ export function CmsEditor() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKey || !newContent) return;
-
     createMutation.mutate({ key: newKey, content: newContent });
+  };
+
+  const handleUpdateContent = (id: string) => {
+    const content = editedContents[id];
+    if (!content) return;
+
+    updateMutation.mutate({
+      id,
+      content,
+      key: editingKey?.id === id ? editingKey.key : undefined
+    });
   };
 
   if (isLoading) {
@@ -165,12 +177,14 @@ export function CmsEditor() {
                     defaultValue={content.content}
                     onChange={(e) => {
                       const newValue = e.target.value;
-                      if (newValue !== content.content) {
-                        updateMutation.mutate({
-                          id: content.id,
-                          content: newValue,
-                          key: editingKey?.id === content.id ? editingKey.key : undefined
-                        });
+                      setEditedContents(prev => ({
+                        ...prev,
+                        [content.id]: newValue
+                      }));
+                    }}
+                    onBlur={() => {
+                      if (editedContents[content.id] && editedContents[content.id] !== content.content) {
+                        handleUpdateContent(content.id);
                       }
                     }}
                     rows={2}
@@ -184,13 +198,23 @@ export function CmsEditor() {
                       onClick={() => {
                         updateMutation.mutate({
                           id: content.id,
-                          content: content.content,
+                          content: editedContents[content.id] || content.content,
                           key: editingKey.key
                         });
                       }}
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      Zapisz klucz
+                      Zapisz zmiany
+                    </Button>
+                  )}
+                  {editedContents[content.id] && editedContents[content.id] !== content.content && !editingKey?.id && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleUpdateContent(content.id)}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Zapisz zmiany
                     </Button>
                   )}
                   <span className="text-sm text-muted-foreground block mt-2">

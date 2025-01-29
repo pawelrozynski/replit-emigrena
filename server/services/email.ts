@@ -13,8 +13,8 @@ export const emailService = {
   },
 
   sendVerificationEmail: async (to: string, token: string) => {
-    // Force production URL since we're running on Replit
-    const baseUrl = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
+    // Use direct Replit URL without workspace prefix
+    const baseUrl = `https://${process.env.REPL_OWNER}.${process.env.REPL_SLUG}.repl.co`;
     const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
 
     const msg = {

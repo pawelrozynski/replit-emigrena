@@ -14,10 +14,7 @@ export const emailService = {
   },
 
   sendVerificationEmail: async (to: string, token: string) => {
-    const baseUrl = process.env.BASE_URL 
-      ? `https://${process.env.BASE_URL}`
-      : `https://${process.env.REPL_OWNER}.${process.env.REPL_SLUG}.repl.co`;
-
+    const baseUrl = 'https://e-migrena-tech-pawel34.replit.app';
     const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
 
     const msg = {

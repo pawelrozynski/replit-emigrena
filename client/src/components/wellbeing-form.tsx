@@ -97,10 +97,11 @@ export function WellbeingForm() {
     const submitDate = new Date(Date.UTC(year, month, day));
 
     // Sprawdź czy data nie jest z przyszłości
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
 
-    if (submitDate > today) {
+    if (submitDate >= tomorrow) {
       form.setError('root', {
         type: 'manual',
         message: 'Nie można dodawać wpisów z przyszłą datą'

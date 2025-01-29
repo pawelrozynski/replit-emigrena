@@ -29,7 +29,8 @@ export function useWellbeing() {
       queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
       toast({
         title: "Wpis dodany pomyślnie",
-        variant: "default",
+        variant: "success",
+        className: "bg-green-50 text-green-900 border-green-200",
       });
     },
     onError: (error: Error) => {

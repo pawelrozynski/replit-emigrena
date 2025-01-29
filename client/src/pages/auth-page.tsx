@@ -60,17 +60,17 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md mx-4">
         {verificationSuccess && (
-          <Alert className="mb-4">
+          <Alert className="mb-4 bg-green-50 text-green-900 border-green-200">
             <AlertDescription>
-              Email został pomyślnie zweryfikowany. Możesz się teraz zalogować.
+              Mail został aktywowany. Teraz możesz się zalogować.
             </AlertDescription>
           </Alert>
         )}
         <CardHeader>
           <CardTitle>{isLogin ? "Logowanie" : "Rejestracja"}</CardTitle>
           <CardDescription>
-            {isLogin 
-              ? getContent("login_instructions") 
+            {isLogin
+              ? getContent("login_instructions")
               : getContent("registration_instructions")}
           </CardDescription>
         </CardHeader>
@@ -97,10 +97,10 @@ export default function AuthPage() {
                   <FormItem>
                     <FormLabel>Hasło</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="password" 
-                        {...field} 
-                        autoComplete={isLogin ? "current-password" : "new-password"} 
+                      <Input
+                        type="password"
+                        {...field}
+                        autoComplete={isLogin ? "current-password" : "new-password"}
                       />
                     </FormControl>
                     <FormMessage />
@@ -115,10 +115,10 @@ export default function AuthPage() {
                     <FormItem>
                       <FormLabel>Potwierdź hasło</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="password" 
-                          {...field} 
-                          autoComplete="new-password" 
+                        <Input
+                          type="password"
+                          {...field}
+                          autoComplete="new-password"
                         />
                       </FormControl>
                       <FormMessage />
@@ -128,24 +128,24 @@ export default function AuthPage() {
               )}
             </CardContent>
             <CardFooter className="flex-col space-y-4">
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={isLoading}
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLogin ? "Zaloguj się" : "Zarejestruj się"}
               </Button>
-              <Button 
-                type="button" 
-                variant="link" 
+              <Button
+                type="button"
+                variant="link"
                 onClick={() => {
                   setIsLogin(!isLogin);
                   form.reset();
                 }}
               >
-                {isLogin 
-                  ? "Nie masz konta? Zarejestruj się" 
+                {isLogin
+                  ? "Nie masz konta? Zarejestruj się"
                   : "Masz już konto? Zaloguj się"}
               </Button>
             </CardFooter>

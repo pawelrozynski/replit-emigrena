@@ -53,7 +53,8 @@ export function useUser() {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
         title: "Zalogowano pomyślnie",
-        variant: "default"
+        variant: "default",
+        className: "bg-green-50 text-green-900 border-green-200"
       });
     },
     onError: (error: Error) => {
@@ -85,7 +86,8 @@ export function useUser() {
       toast({
         title: "Rejestracja pomyślna",
         description: getContent("register_success_message"),
-        variant: "default"
+        variant: "default",
+        className: "bg-green-50 text-green-900 border-green-200"
       });
     },
     onError: (error: Error) => {
@@ -112,7 +114,8 @@ export function useUser() {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
         title: "Wylogowano pomyślnie",
-        variant: "default"
+        variant: "default",
+        className: "bg-green-50 text-green-900 border-green-200"
       });
     },
   });

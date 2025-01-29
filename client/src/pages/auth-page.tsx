@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useLocation } from "wouter";
+import { useLocation, useNavigate } from "wouter";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,14 +28,18 @@ type AuthFields = z.infer<typeof authSchema>;
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const { login, register, isLoading } = useUser();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const { getContent } = useCms();
 
   useEffect(() => {
     const params = new URLSearchParams(location.split('?')[1]);
-    if (params.get('verified') === 'true') {
+    const verified = params.get('verified');
+    if (verified === 'true') {
       setVerificationSuccess(true);
+      // Usunięcie parametru z URL bez przeładowania strony
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
     }
   }, [location]);
 

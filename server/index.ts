@@ -2,11 +2,17 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { limiter, sessionMiddleware, healthCheck } from "./middleware";
+import helmet from "helmet";
 
 const app = express();
 
 // Trust proxy - required for rate limiting behind Replit's proxy
 app.set('trust proxy', 1);
+
+// Security middleware for production
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet());
+}
 
 // Basic middleware
 app.use(express.json());
@@ -56,7 +62,7 @@ app.use((req, res, next) => {
   // Global error handler with production-safe error messages
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = process.env.NODE_ENV === 'production' 
+    const message = process.env.NODE_ENV === 'production'
       ? 'Wystąpił błąd serwera. Spróbuj ponownie później.'
       : err.message || "Internal Server Error";
 
@@ -65,7 +71,7 @@ app.use((req, res, next) => {
       console.error(err);
     }
 
-    res.status(status).json({ 
+    res.status(status).json({
       status: 'error',
       message,
       ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })

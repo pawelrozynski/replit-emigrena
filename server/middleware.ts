@@ -4,12 +4,17 @@ import MemoryStore from "memorystore";
 
 const MemoryStoreSession = MemoryStore(session);
 
-export const limiter = rateLimit({
+// Stricter rate limiting for production
+const productionConfig = {
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 50 : 100, // Stricter limit in production
+};
+
+export const limiter = rateLimit({
+  ...productionConfig,
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: true, // Trust X-Forwarded-For header
+  trustProxy: true,
   handler: (req, res) => {
     res.status(429).json({
       status: 'error',
@@ -19,7 +24,7 @@ export const limiter = rateLimit({
 });
 
 export const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || "your-secret-key",
+  secret: process.env.SESSION_SECRET || "development-secret-key",
   resave: false,
   saveUninitialized: false,
   store: new MemoryStoreSession({
@@ -28,15 +33,16 @@ export const sessionMiddleware = session({
   cookie: {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: process.env.NODE_ENV === "production" ? 'strict' : 'lax'
   },
   proxy: true // Trust proxy for session
 });
 
-// Health check middleware
 export const healthCheck = (req: any, res: any) => {
   res.status(200).json({ 
     status: 'ok', 
-    timestamp: new Date().toISOString() 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
   });
 };

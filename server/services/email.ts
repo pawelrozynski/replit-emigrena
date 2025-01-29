@@ -13,11 +13,8 @@ export const emailService = {
   },
 
   sendVerificationEmail: async (to: string, token: string) => {
-    // Generujemy poprawny URL na podstawie REPL_SLUG i REPL_OWNER
-    const baseUrl = process.env.NODE_ENV === 'production'
-      ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
-      : 'http://localhost:5000';
-
+    // Force production URL since we're running on Replit
+    const baseUrl = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
     const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
 
     const msg = {

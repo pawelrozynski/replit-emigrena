@@ -2,6 +2,7 @@ import sgMail from '@sendgrid/mail';
 import { randomBytes } from 'crypto';
 
 if (!process.env.SENDGRID_API_KEY) {
+  console.error('SENDGRID_API_KEY is not set');
   throw new Error('SENDGRID_API_KEY is required for email functionality');
 }
 
@@ -37,14 +38,18 @@ export const emailService = {
 
     try {
       await sgMail.send(msg);
-      console.log('Verification email sent successfully');
-      console.log('Generated verification URL:', verificationUrl);
+      console.log('Verification email sent successfully to:', to);
+      console.log('Using verification URL:', verificationUrl);
+      return true;
     } catch (error: any) {
-      console.error('Error sending verification email:', error);
-      if (error.response) {
-        console.error('SendGrid error details:', error.response.body);
+      console.error('SendGrid error details:', error?.response?.body || error);
+      if (error.response?.body) {
+        const errors = error.response.body.errors;
+        if (errors && errors.length > 0) {
+          throw new Error(`Błąd wysyłania emaila: ${errors[0].message}`);
+        }
       }
-      throw new Error('Nie udało się wysłać emaila weryfikacyjnego');
+      throw new Error('Nie udało się wysłać emaila weryfikacyjnego. Spróbuj ponownie później.');
     }
   }
 };
